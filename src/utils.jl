@@ -203,7 +203,7 @@ function Hermitian_inner_product(u::CTMatrixTypes, v::CTMatrixTypes)
     length(u) == length(v) || throw(ArgumentError("Vectors must be the same length in Hermitian inner product."))
     base_ring(u) == base_ring(v) || throw(ArgumentError("Vectors must be over the same field in Hermitian inner product."))
     q2 = order(base_ring(u))
-    issquare(q2) || throw(ArgumentError("The Hermitian inner product is only defined over quadratic field extensions."))
+    is_square(q2) || throw(ArgumentError("The Hermitian inner product is only defined over quadratic field extensions."))
     
     q = Int(sqrt(q2, check = false))
     return sum(u[i] * v[i]^q for i in 1:length(u))
@@ -217,10 +217,12 @@ Return the Hermitian conjugate of the matrix `A`.
 function Hermitian_conjugate_matrix(A::CTMatrixTypes)
     R = base_ring(A)
     q2 = order(R)
-    issquare(q2) || throw(ArgumentError("The Hermitian conjugate is only defined over quadratic field extensions."))
+    is_square(q2) || throw(ArgumentError("The Hermitian conjugate is only defined over quadratic field extensions."))
 
     q = Int(sqrt(q2, check = false))
-    return matrix(R, A .^ q)
+    B = A .^ q
+    # return matrix(R, nrows(B), ncols(B), B)
+    return B
 end
 
 # TODO: entropy function is incomplete
@@ -1245,14 +1247,19 @@ end
 function _expansion_dict(L::CTFieldTypes, K::CTFieldTypes, λ::Vector{<:CTFieldElem})
     m = div(degree(L), degree(K))
     L_elms = collect(L)
-    D = Dict{fqPolyRepFieldElem, fqPolyRepMatrix}()
+    D = Dict{FqFieldElem, FqMatrix}()
+    # println(D)
     for x in L_elms
+        # println(x)
+        # println(typeof(x))
+        # println(matrix(L, 1, m, [tr(x * λi) for λi in λ]))
+        # println(typeof(matrix(L, 1, m, [tr(x * λi) for λi in λ])))
         D[x] = matrix(L, 1, m, [tr(x * λi) for λi in λ])
     end
     return D
 end
 
-function _expand_matrix(M::CTMatrixTypes, D::Dict{fqPolyRepFieldElem, fqPolyRepMatrix}, m::Int)
+function _expand_matrix(M::CTMatrixTypes, D::Dict{FqFieldElem, FqMatrix}, m::Int)
     m > 0 || throw(DomainError("Expansion factor must be positive"))
 
     M_exp = zero_matrix(base_ring(M), nrows(M), ncols(M) * m)
@@ -1290,7 +1297,7 @@ end
 Return the sets of quadratic resides and quadratic non-residues of `q` and `n`.
 """
 function quadratic_residues(q::Int, n::Int)
-    isodd(n) && isprime(n) || throw(ArgumentError("n must be an odd prime in quadratic residues"))
+    isodd(n) && is_prime(n) || throw(ArgumentError("n must be an odd prime in quadratic residues"))
     q^div(n - 1, 2) % n == 1 || throw(ArgumentError("q^(n - 1)/2 ≅ 1 mod n in quadratic residues"))
 
     # F = GF(n, 1, :α)

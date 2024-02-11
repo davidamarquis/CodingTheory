@@ -24,8 +24,8 @@ using StatsBase
 
 # TODO: no need to import things I switched to snake_case
 import LinearAlgebra: tr, Adjoint, transpose, kron, diagm
-import Oscar: dual, isprime, factor, transpose, order, polynomial, nrows, ncols, degree,
-    isisomorphic, lift, quo, VectorSpace, dimension, extend, support, complement,
+import Oscar: dual, is_prime, factor, transpose, order, polynomial, nrows, ncols, degree,
+    lift, quo, VectorSpace, dimension, extend, support, complement, polynomial_ring,
     is_regular, iscyclic, genus, density, isdegenerate, index, generators, copy, issubfield, ⊗,
     girth, generator_matrix, polynomial_ring, is_primitive, normal_subgroups, vector_space,
     tensor_product, gens, dim, is_isomorphic

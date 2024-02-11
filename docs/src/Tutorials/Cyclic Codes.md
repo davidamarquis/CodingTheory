@@ -236,7 +236,7 @@ Finite field of degree 4 over F_2
 julia> α = gen(F)
 α
 
-julia> R, x = PolynomialRing(F, :x)
+julia> R, x = polynomial_ring(F, :x)
 (Univariate Polynomial Ring in x over Finite field of degree 4 over F_2, x)
 
 julia> g2 = (x - α^3)* (x - α^7)

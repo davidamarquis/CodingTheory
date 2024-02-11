@@ -55,7 +55,7 @@
     @test minimum_distance(C) == 7
     @test CodingTheory.dimension(C) >= length(C) - ord(length(C), 3)*(5 - 1)
 
-    R, (x, y) = PolynomialRing(Nemo.ZZ, (:x, :y))
+    R, (x, y) = polynomial_ring(Nemo.ZZ, [:x, :y])
 
     # example: MacWilliams & Sloane
     # any cyclic code over GF(2^m) of length 2^m + 1 is reversible

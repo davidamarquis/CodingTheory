@@ -64,7 +64,7 @@ function LinearCode(G::CTMatrixTypes, parity::Bool=false, brute_force_WE::Bool=t
         else
             MacWilliams_identity(dual(C), _weight_enumerator_BF(C.H_stand))
         end
-        d = minimum(filter(ispositive, first.(exponent_vectors(CWE_to_HWE(C.weight_enum).polynomial))))
+        d = minimum(filter(is_positive, first.(exponent_vectors(CWE_to_HWE(C.weight_enum).polynomial))))
         set_minimum_distance!(C, d)
     end
 
@@ -93,7 +93,7 @@ function LinearCode(G::T, H::T, brute_force_WE::Bool=true) where T <: CTMatrixTy
         else
             MacWilliams_identity(dual(C), _weight_enumerator_BF(C.H_stand))
         end
-        d = minimum(filter(ispositive, first.(exponent_vectors(CWE_to_HWE(C.weight_enum).polynomial))))
+        d = minimum(filter(is_positive, first.(exponent_vectors(CWE_to_HWE(C.weight_enum).polynomial))))
         set_minimum_distance!(C, d)
     end
 
@@ -424,11 +424,11 @@ function show(io::IO, C::AbstractLinearCode)
     if get(io, :compact, true)
         if typeof(C) <: AbstractCyclicCode
             println(io, "$(order(C.F))-Cyclotomic cosets: ")
-            len = length(qcosetsreps(C))
+            len = length(qcosets_reps(C))
             if len == 1
-                println("\tC_$(qcosetsreps(C)[1])")
+                println("\tC_$(qcosets_reps(C)[1])")
             else
-                for (i, x) in enumerate(qcosetsreps(C))
+                for (i, x) in enumerate(qcosets_reps(C))
                     if i == 1
                         print(io, "\tC_$x ∪ ")
                     elseif i == 1 && i == len
@@ -441,7 +441,7 @@ function show(io::IO, C::AbstractLinearCode)
                 end
             end
             println(io, "Generator polynomial:")
-            println(io, "\t", generatorpolynomial(C))
+            println(io, "\t", generator_polynomial(C))
         end
 
         if C.n <= 30
@@ -621,7 +621,7 @@ function dual(C::AbstractLinearCode)
         if !ismissing(C.weight_enum)
             dual_wt_enum = MacWilliams_identity(C, C.weight_enum)
             dual_HWE_poly = CWE_to_HWE(dual_wt_enum).polynomial
-            d = minimum(filter(ispositive, first.(exponent_vectors(dual_HWE_poly))))
+            d = minimum(filter(is_positive, first.(exponent_vectors(dual_HWE_poly))))
             return LinearCode(C.F, C.n, C.n - C.k, d, d, d, H, G,
                 H_stand, G_stand, P_stand, dual_wt_enum)
         else

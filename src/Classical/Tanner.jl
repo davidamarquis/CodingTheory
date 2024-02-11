@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-    Tanner_graph_plot(H::Union{fq_nmod_mat, Matrix{Int}})
+    Tanner_graph_plot(H::Union{fqPolyRepMatrix, Matrix{Int}})
 
 Return the Tanner graph of the matrix `H` as a `Figure` object.
 """
@@ -63,14 +63,14 @@ function Tanner_graph_plot(H::Union{T, Matrix{Int}}) where T <: CTMatrixTypes
 end
 
 """
-    Tanner_graph(H::Union{fq_nmod_mat, Matrix{Int}})
+    Tanner_graph(H::Union{fqPolyRepMatrix, Matrix{Int}})
 
 Return the `SimpleGraph` object repesenting the Tanner graph of the parity-check
 matrix `H` along with the indices of the left and right vertices representing
 the bits and parity checks, respectively.
 """
-function Tanner_graph(H::Union{fq_nmod_mat, Matrix{Int}})
-    typeof(H) <: fq_nmod_mat ? (I = FpmattoJulia(H);) : (I = H;)
+function Tanner_graph(H::Union{fqPolyRepMatrix, Matrix{Int}})
+    typeof(H) <: fqPolyRepMatrix ? (I = FpmattoJulia(H);) : (I = H;)
     I_tr = transpose(I)
     # TODO: fix B - no zeros for this type
     B = vcat(hcat(zeros(Int, size(I_tr)), I), hcat(I_tr, zeros(Int, size(I))))

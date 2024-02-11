@@ -260,7 +260,7 @@
     @test !flag
 
     F = GF(2)
-    S, x = PolynomialRing(F, :x)
+    S, x = polynomial_ring(F, :x)
     l = 3
     R = residue_ring(S, x^l - 1)
     A = matrix(R, 2, 3, [1, 0, 1 + x^2, 1 + x, 1 + x + x^2, x^2])

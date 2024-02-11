@@ -58,7 +58,7 @@ function CodingTheory.optimal_lambda(ρ, l_max::Int, param::Float64, var_type::S
     # TODO: check for when var_type == :ε as well
 
     λ_vec, r, ε =  _optimal_distributions(ρ, :ρ, l_max, param, var_type, Δλ = 0.001)
-    _, x = CodingTheory.Oscar.PolynomialRing(CodingTheory.Oscar.RealField(), :x)
+    _, x = CodingTheory.Oscar.polynomial_ring(CodingTheory.Oscar.RealField(), :x)
     λ = sum(c * x^(i - 1) for (i, c) in enumerate(λ_vec))
     return (λ = λ, r = r, ε = ε)
 end
@@ -80,7 +80,7 @@ function CodingTheory.optimal_rho(λ, r_max::Int, param::Float64, var_type::Symb
     # TODO: check for when var_type == :ε as well
 
     ρ_vec, r, ε = _optimal_distributions(λ, :λ, r_max, param, var_type, Δρ = 0.001)
-    _, x = CodingTheory.Oscar.PolynomialRing(CodingTheory.Oscar.RealField(), :x)
+    _, x = CodingTheory.Oscar.polynomial_ring(CodingTheory.Oscar.RealField(), :x)
     ρ = sum(c * x^(i - 1) for (i, c) in enumerate(ρ_vec))
     return (ρ = ρ, r = r, ε = ε)
 end
@@ -184,13 +184,13 @@ function CodingTheory.optimal_lambda_and_rho(l_max::Int, r_max::Int, param::Floa
             Δ > 0 ? (low = mid;) : (high = mid;)
         end
         0 <= Δ <= tolerance || error("Solution for $(poly_type == :ρ ? :λ : :ρ) did not converge in $max_iters iterations")
-        _, x = CodingTheory.Oscar.PolynomialRing(CodingTheory.Oscar.RealField(), :x)
+        _, x = CodingTheory.Oscar.polynomial_ring(CodingTheory.Oscar.RealField(), :x)
         λ = sum(c * x^(i - 1) for (i, c) in enumerate(λ_vec))
         ρ = sum(c * x^(i - 1) for (i, c) in enumerate(ρ_vec))
         return (λ = λ, ρ = ρ, r = sol_rate, ε = mid)
     elseif var_type == :ε
         λ_vec, ρ_vec, sol_rate = _find_lambda_and_rho(l_max, r_max, param, Δρ = Δρ, Δλ = Δλ)
-        _, x = CodingTheory.Oscar.PolynomialRing(CodingTheory.Oscar.RealField(), :x)
+        _, x = CodingTheory.Oscar.polynomial_ring(CodingTheory.Oscar.RealField(), :x)
         λ = sum(c * x^(i - 1) for (i, c) in enumerate(λ_vec))
         ρ = sum(c * x^(i - 1) for (i, c) in enumerate(ρ_vec))
         return (λ = λ, ρ = ρ, r = sol_rate, ε = param)

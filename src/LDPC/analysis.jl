@@ -208,7 +208,7 @@ function check_concentrated_degree_distribution(Ch::BinaryErasureChannel, gap::R
     norm = sum(λ_vec)
     λ_vec ./= norm
 
-    _, x = PolynomialRing(RealField(), :x)
+    _, x = polynomial_ring(RealField(), :x)
     λ = sum(λi * x^i for (i, λi) in enumerate(λ_vec))
     ρ = x^round(Int, 1 / α)
     return λ, ρ
@@ -574,7 +574,7 @@ end
 # # #     decoder == :BEC || throw(ArgumentError("The only decoder supported for the BEC channel is :BEC"))
 # # # end
 
-# # # R, x = PolynomialRing(RealField(), :x)
+# # # R, x = polynomial_ring(RealField(), :x)
 
 # # function optimal_lambda_and_rho(l_max::Int, r_max::Int, real_param::Float64, var_type::Symbol)
 # #     var_type ∈ (:r, :ε) || throw(ArgumentError("var_type must be :r for target rate or :ε for threshold"))

@@ -32,7 +32,7 @@ function LDPCCode(H::CTMatrixTypes)
     end
     c, r = maximum(cols), maximum(rows)
 
-    R, x = PolynomialRing(Nemo.QQ, :x)
+    R, x = polynomial_ring(Nemo.QQ, :x)
     col_poly = R(0)
     for i in cols
         col_poly += i * x^(i - 1)
@@ -92,7 +92,7 @@ function regular_LDPC_code(q::Int, n::Int, l::Int, r::Int; seed::Union{Nothing, 
     @assert all(count(.!iszero.(H[:, j])) == l for j in axes(H, 2))
     @assert all(count(.!iszero.(H[i, :])) == r for i in axes(H, 1))
 
-    R, x = PolynomialRing(Nemo.QQ, :x)
+    R, x = polynomial_ring(Nemo.QQ, :x)
     C = LinearCode(H, true)
     return LDPCCode(C.F, C.n, C.k, C.d, C.l_bound, C.u_bound, H, n * l, l * ones(Int, n),
         r * ones(Int, m), l, r, max(l, r), r / n, true, missing, (1 // l) * x^l,

@@ -680,7 +680,7 @@ Classical weight reduction also applies to other types of inputs, although with 
 ```
 julia> F = GF(2);
 
-julia> S, x = PolynomialRing(F, "x");
+julia> S, x = polynomial_ring(F, :x);
 
 julia> l = 63;
 

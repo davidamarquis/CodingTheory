@@ -9,11 +9,11 @@
 #############################
 
 """
-    SubsystemCode(G::fq_nmod_mat, char_vec::Union{Vector{nmod}, Missing}=missing)
+    SubsystemCode(G::fq_nmod_mat, char_vec::Union{Vector{zzModRingElem}, Missing}=missing)
 
 Return the subsystem code whose gauge group is determined by `G` and signs by `char_vec`.
 """
-function SubsystemCode(G::CTMatrixTypes, char_vec::Union{Vector{nmod}, Missing}=missing,
+function SubsystemCode(G::CTMatrixTypes, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
     logs_alg::Symbol=:sys_eqs)
 
     logs_alg ∈ (:sys_eqs, :VS) || throw(ArgumentError("Unrecognized logicals algorithm"))
@@ -127,7 +127,7 @@ function SubsystemCode(G::CTMatrixTypes, char_vec::Union{Vector{nmod}, Missing}=
 end
 
 """
-    SubsystemCode(GPauli::Vector{T}, char_vec::Union{Vector{nmod}, Missing}=missing) where T <: Union{String, Vector{Char}}
+    SubsystemCode(GPauli::Vector{T}, char_vec::Union{Vector{zzModRingElem}, Missing}=missing) where T <: Union{String, Vector{Char}}
 
 Return the subsystem code whose gauge group is determined by the vector of Pauli strings `GPauli`
 and signs by `char_vec`.
@@ -136,7 +136,7 @@ and signs by `char_vec`.
 * Any +/- 1 characters in front of each stabilizer are stripped. No check is done
   to make sure these signs agree with the ones computed using the character vector.
 """
-function SubsystemCode(GPauli::Vector{T}, char_vec::Union{Vector{nmod}, Missing}=missing,
+function SubsystemCode(GPauli::Vector{T}, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
     logs_alg::Symbol=:sys_eqs) where T <: Union{String, Vector{Char}}
 
     logs_alg ∈ (:sys_eqs, :VS) || throw(ArgumentError("Unrecognized logicals algorithm"))
@@ -147,13 +147,13 @@ function SubsystemCode(GPauli::Vector{T}, char_vec::Union{Vector{nmod}, Missing}
 end
 
 """
-    SubsystemCode(S::fq_nmod_mat, L::CTMatrixTypes, G::CTMatrixTypes, char_vec::Union{Vector{nmod}, Missing}=missing)
+    SubsystemCode(S::fq_nmod_mat, L::CTMatrixTypes, G::CTMatrixTypes, char_vec::Union{Vector{zzModRingElem}, Missing}=missing)
 
 Return the subsystem code whose stabilizers are given by `S`, (bare) logical operators
 by `L`, gauge operators (not including stabilizers) by `G`, and signs by `char_vec`.
 """
 function SubsystemCode(S::CTMatrixTypes, L::CTMatrixTypes, G::CTMatrixTypes,
-    char_vec::Union{Vector{nmod}, Missing}=missing)
+    char_vec::Union{Vector{zzModRingElem}, Missing}=missing)
 
     iszero(S) && error("The stabilizer matrix is empty.")
     S = _remove_empty(S, :rows)
@@ -226,13 +226,13 @@ end
 
 # if people want to make a graph code go through the other constructor
 """
-    SubsystemCode(SPauli::Vector{T}, LPauli::Vector{T}, GPauli::Vector{T}, char_vec::Union{Vector{nmod}, Missing}=missing) where T <: Union{String, Vector{Char}}
+    SubsystemCode(SPauli::Vector{T}, LPauli::Vector{T}, GPauli::Vector{T}, char_vec::Union{Vector{zzModRingElem}, Missing}=missing) where T <: Union{String, Vector{Char}}
 
 Return the subsystem code whose stabilizers are given by the vectors of Pauli strings `SPauli`, (bare)
 logical operators by `LPauli`, gauge operators (not including stabilizers) by `GPauli`, and signs by `char_vec`.    
 """
 function SubsystemCode(SPauli::Vector{T}, LPauli::Vector{T}, GPauli::Vector{T},
-    char_vec::Union{Vector{nmod}, Missing}=missing) where T <: Union{String, Vector{Char}}
+    char_vec::Union{Vector{zzModRingElem}, Missing}=missing) where T <: Union{String, Vector{Char}}
 
     S = _Pauli_string_to_symplectic(_process_strings(SPauli))
     iszero(S) && error("The processed Pauli strings returned a set of empty stabilizer generators.")
@@ -562,12 +562,12 @@ gauge_group_generators_matrix(S::AbstractSubsystemCode) = gauge_group(S)
 #############################
 
 """
-    set_signs(S::AbstractSubsystemCode, char_vec::Vector{nmod})
-    set_signs!(S::AbstractSubsystemCode, char_vec::Vector{nmod})
+    set_signs(S::AbstractSubsystemCode, char_vec::Vector{zzModRingElem})
+    set_signs!(S::AbstractSubsystemCode, char_vec::Vector{zzModRingElem})
 
 Set the character vector of `S` to `char_vec` and update the signs.
 """
-function set_signs!(S::AbstractSubsystemCode, char_vec::Vector{nmod})
+function set_signs!(S::AbstractSubsystemCode, char_vec::Vector{zzModRingElem})
     R = base_ring(character_vector(S))
     length(char_vec) == 2 * S.n || throw(ArgumentError("Characteristic vector is of improper length for the code."))
     for s in char_vec
@@ -578,7 +578,7 @@ function set_signs!(S::AbstractSubsystemCode, char_vec::Vector{nmod})
     S.char_vec = char_vec
 end
 
-set_signs(S::AbstractSubsystemCode, char_vec::Vector{nmod}) = (S_new = deepcopy(S); return setsign!s(S_new, char_vec))
+set_signs(S::AbstractSubsystemCode, char_vec::Vector{zzModRingElem}) = (S_new = deepcopy(S); return setsign!s(S_new, char_vec))
 
 """
     set_stabilizers(S::AbstractSubsystemCode, stabs::fq_nmod_mat)
@@ -792,7 +792,7 @@ end
      # general functions
 #############################
 
-function _process_char_vec(char_vec::Union{Vector{nmod}, Missing}, p::Int, n::Int)
+function _process_char_vec(char_vec::Union{Vector{zzModRingElem}, Missing}, p::Int, n::Int)
     if !ismissing(char_vec)
         n == length(char_vec) || throw(ArgumentError("The characteristic value is of incorrect length."))
         if p == 2
@@ -814,7 +814,7 @@ function _process_char_vec(char_vec::Union{Vector{nmod}, Missing}, p::Int, n::In
     return char_vec
 end
 
-function _determine_signs(S::CTMatrixTypes, char_vec::Vector{nmod})
+function _determine_signs(S::CTMatrixTypes, char_vec::Vector{zzModRingElem})
     if iszero(char_vec)
         R = parent(char_vec[1])
         signs = [R(0) for _ in 1:nrows(S)]
@@ -824,7 +824,7 @@ function _determine_signs(S::CTMatrixTypes, char_vec::Vector{nmod})
     return signs
 end
 
-function _determine_signs_CSS(S::CTMatrixTypes, char_vec::Vector{nmod}, X_size::Int, Z_size::Int)
+function _determine_signs_CSS(S::CTMatrixTypes, char_vec::Vector{zzModRingElem}, X_size::Int, Z_size::Int)
     if iszero(char_vec)
         R = parent(char_vec[1])
         signs = [R(0) for _ in 1:nrows(S)]
@@ -838,7 +838,7 @@ function _determine_signs_CSS(S::CTMatrixTypes, char_vec::Vector{nmod}, X_size::
     return signs, X_signs, Z_signs
 end
 
-function _get_signs(A::CTMatrixTypes, char_vec::Vector{nmod})
+function _get_signs(A::CTMatrixTypes, char_vec::Vector{zzModRingElem})
     R = base_ring(char_vec[1])
     nc = ncols(A)
     length(char_vec) == nc || throw(ArgumentError("Input to _get_signs is expected to be in symplectic form and of the same length as the characteristic vector."))
@@ -855,13 +855,13 @@ function _get_signs(A::CTMatrixTypes, char_vec::Vector{nmod})
     return signs
 end
 
-function _splitstabilizers(S::T, signs::Vector{nmod}) where T <: CTMatrixTypes
+function _splitstabilizers(S::T, signs::Vector{zzModRingElem}) where T <: CTMatrixTypes
     X_stabs = Vector{T}()
-    X_signs = Vector{nmod}()
+    X_signs = Vector{zzModRingElem}()
     Z_stabs = Vector{T}()
-    Z_signs = Vector{nmod}()
+    Z_signs = Vector{zzModRingElem}()
     mixed_stabs = Vector{T}()
-    mixed_signs = Vector{nmod}()
+    mixed_signs = Vector{zzModRingElem}()
 
     half = div(ncols(S), 2)
     for r in 1:nrows(S)
@@ -914,7 +914,7 @@ end
 # probably need to simply redo the above to simply start with zero matrix
 # and then either set first or add to it (return matrix[2:end, L])
 # TODO: need more robust CSS detection, what if I add and X and Z stabilizer and use it implace of the Z
-function _is_CSS_symplectic(stabs::T, signs::Vector{nmod}, trim::Bool=true) where T <: CTMatrixTypes
+function _is_CSS_symplectic(stabs::T, signs::Vector{zzModRingElem}, trim::Bool=true) where T <: CTMatrixTypes
     X_stabs, X_signs, Z_stabs, Z_signs, mixed_stabs, mixed_signs = _splitstabilizers(stabs, signs)
     if typeof(mixed_stabs) <: Vector{T}
         if trim

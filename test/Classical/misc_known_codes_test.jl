@@ -10,7 +10,7 @@
     @test H.d == H.l_bound == H.u_bound == 4
     @test H.H == matrix(H.F, [1 ω ω 1 0 0; ω 1 ω 0 1 0; ω ω 1 0 0 1])
 
-    R, (x, y) = PolynomialRing(Nemo.ZZ, (:x, :y))
+    R, (x, y) = polynomial_ring(Nemo.ZZ, [:x, :y])
 
     # Hamming codes
     # Tetra code is Hammingcode(3, 2)

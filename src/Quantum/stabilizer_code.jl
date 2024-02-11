@@ -9,8 +9,8 @@
 #############################
 
 """
-    StabilizerCodeCSS(C1::AbstractLinearCode, C2::AbstractLinearCode, char_vec::Union{Vector{nmod}, Missing}=missing)
-    CSSCode(C1::AbstractLinearCode, C2::AbstractLinearCode, char_vec::Union{Vector{nmod}, Missing}=missing)
+    StabilizerCodeCSS(C1::AbstractLinearCode, C2::AbstractLinearCode, char_vec::Union{Vector{zzModRingElem}, Missing}=missing)
+    CSSCode(C1::AbstractLinearCode, C2::AbstractLinearCode, char_vec::Union{Vector{zzModRingElem}, Missing}=missing)
 
 Return the CSS code given by the CSS construction on two linear codes `C1`
 and `C2` with `C2 ⊆ C1` and whose signs by `char_vec`.
@@ -21,7 +21,7 @@ and `C2` with `C2 ⊆ C1` and whose signs by `char_vec`.
   of `C2^⟂`, `H(C2^⟂)`, and the `Z` stabilizers by `H(C1)`.
 """
 function StabilizerCodeCSS(C1::AbstractLinearCode, C2::AbstractLinearCode,
-    char_vec::Union{Vector{nmod}, Missing}=missing, logs_alg::Symbol=:stnd_frm)
+    char_vec::Union{Vector{zzModRingElem}, Missing}=missing, logs_alg::Symbol=:stnd_frm)
 
     logs_alg ∈ [:stnd_frm, :VS, :sys_eqs] || throw(ArgumentError("Unrecognized logicals algorithm"))
     C2 ⊆ C1 || throw(ArgumentError("The second argument must be a subset of the first in the CSS construction."))
@@ -58,12 +58,12 @@ function StabilizerCodeCSS(C1::AbstractLinearCode, C2::AbstractLinearCode,
             signs, X_signs, Z_signs, char_vec, missing, false, stabs_stand, stand_r, stand_k, P_stand)
     end
 end
-CSSCode(C1::AbstractLinearCode, C2::AbstractLinearCode, char_vec::Union{Vector{nmod}, Missing}=missing,
+CSSCode(C1::AbstractLinearCode, C2::AbstractLinearCode, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
     logs_alg::Symbol=:stnd_frm) = StabilizerCodeCSS(C1, C2, char_vec, logs_alg)
 
 """
-    StabilizerCodeCSS(C::AbstractLinearCode, char_vec::Union{Vector{nmod}, Missing}=missing)
-    CSSCode(C::AbstractLinearCode, char_vec::Union{Vector{nmod}, Missing}=missing)
+    StabilizerCodeCSS(C::AbstractLinearCode, char_vec::Union{Vector{zzModRingElem}, Missing}=missing)
+    CSSCode(C::AbstractLinearCode, char_vec::Union{Vector{zzModRingElem}, Missing}=missing)
 
 Return the CSS code given by the CSS construction on a self-orthogonal linear code
 `C`, i.e., `C ⊆ C^⟂`, and whose signs by `char_vec`.
@@ -73,7 +73,7 @@ Return the CSS code given by the CSS construction on a self-orthogonal linear co
   and minimum distance `d >= min(d1, d2^⟂)`. The `X` stabilizers are given by the
   parity-check matrix of `C2^⟂`, `H(C2^⟂)`, and the `Z` stabilizers by `H(C1)`.
 """
-function StabilizerCodeCSS(C::LinearCode, char_vec::Union{Vector{nmod}, Missing}=missing,
+function StabilizerCodeCSS(C::LinearCode, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
     logs_alg::Symbol=:stnd_frm)
 
     logs_alg ∈ [:stnd_frm, :VS, :sys_eqs] || throw(ArgumentError("Unrecognized logicals algorithm"))
@@ -113,16 +113,16 @@ function StabilizerCodeCSS(C::LinearCode, char_vec::Union{Vector{nmod}, Missing}
             X_signs, Z_signs, char_vec, missing, false, stabs_stand, stand_r, stand_k, P_stand)
     end
 end
-CSSCode(C::AbstractLinearCode, char_vec::Union{Vector{nmod}, Missing}=missing,
+CSSCode(C::AbstractLinearCode, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
     logs_alg::Symbol=:stnd_frm) = StabilizerCodeCSS(C, char_vec, logs_alg)
 
 """
-    StabilizerCodeCSS(X_matrix::fq_nmod_mat, Z_matrix::fq_nmod_mat, char_vec::Union{Vector{nmod}, Missing}=missing)
-    CSSCode(X_matrix::fq_nmod_mat, Z_matrix::fq_nmod_mat, char_vec::Union{Vector{nmod}, Missing}=missing)
+    StabilizerCodeCSS(X_matrix::fq_nmod_mat, Z_matrix::fq_nmod_mat, char_vec::Union{Vector{zzModRingElem}, Missing}=missing)
+    CSSCode(X_matrix::fq_nmod_mat, Z_matrix::fq_nmod_mat, char_vec::Union{Vector{zzModRingElem}, Missing}=missing)
 
 Return a CSS code whose `X`-stabilizers are given by `X_matrix`, `Z`-stabilizers by `Z_matrix`, and signs by `char_vec`.
 """
-function StabilizerCodeCSS(X_matrix::T, Z_matrix::T, char_vec::Union{Vector{nmod}, Missing}=missing,
+function StabilizerCodeCSS(X_matrix::T, Z_matrix::T, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
     logs_alg::Symbol=:stnd_frm) where T <: CTMatrixTypes
 
     logs_alg ∈ [:stnd_frm, :VS, :sys_eqs] || throw(ArgumentError("Unrecognized logicals algorithm"))
@@ -185,12 +185,12 @@ function StabilizerCodeCSS(X_matrix::T, Z_matrix::T, char_vec::Union{Vector{nmod
             stand_k, P_stand)
     end
 end
-CSSCode(X_matrix::T, Z_matrix::T, char_vec::Union{Vector{nmod}, Missing}=missing,
+CSSCode(X_matrix::T, Z_matrix::T, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
     logs_alg::Symbol=:stnd_frm) where T <: CTMatrixTypes = StabilizerCodeCSS(X_matrix, Z_matrix, char_vec, logs_alg)
 
 """
-    StabilizerCodeCSS(S_Pauli::Vector{T}, char_vec::Union{Vector{nmod}, Missing}=missing) where T <: Union{String, Vector{Char}}
-    CSSCode(S_Pauli::Vector{T}, char_vec::Union{Vector{nmod}, Missing}=missing) where T <: Union{String, Vector{Char}}
+    StabilizerCodeCSS(S_Pauli::Vector{T}, char_vec::Union{Vector{zzModRingElem}, Missing}=missing) where T <: Union{String, Vector{Char}}
+    CSSCode(S_Pauli::Vector{T}, char_vec::Union{Vector{zzModRingElem}, Missing}=missing) where T <: Union{String, Vector{Char}}
 
 Return the CSS code whose stabilizers are determined by the vector of Pauli strings `S_Pauli` and signs by `char_vec`.
 
@@ -198,7 +198,7 @@ Return the CSS code whose stabilizers are determined by the vector of Pauli stri
 * Any +/- 1 characters in front of each stabilizer are stripped. No check is done
   to make sure these signs agree with the ones computed using the character vector.
 """
-function StabilizerCodeCSS(S_Pauli::Vector{T}, char_vec::Union{Vector{nmod}, Missing}=missing,
+function StabilizerCodeCSS(S_Pauli::Vector{T}, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
     logs_alg::Symbol=:stnd_frm) where T <: Union{String, Vector{Char}}
 
     logs_alg ∈ [:stnd_frm, :VS, :sys_eqs] || throw(ArgumentError("Unrecognized logicals algorithm"))
@@ -262,7 +262,7 @@ function StabilizerCodeCSS(S_Pauli::Vector{T}, char_vec::Union{Vector{nmod}, Mis
         error("Provided Pauli strings are not CSS.")
     end
 end
-CSSCode(S_Pauli::Vector{T}, char_vec::Union{Vector{nmod}, Missing}=missing,
+CSSCode(S_Pauli::Vector{T}, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
     logs_alg::Symbol=:stnd_frm) where T <: Union{String, Vector{Char}} = StabilizerCodeCSS(S_Pauli, char_vec, logs_alg)
 
 """
@@ -276,7 +276,7 @@ CSSCode(S::StabilizerCode, logs_alg::Symbol=:stnd_frm) = StabilizerCodeCSS(S, lo
 
 # entanglement-assisted is not symplectic orthogonal
 """
-    StabilizerCode(S_Pauli::Vector{T}, char_vec::Union{Vector{nmod}, Missing}=missing) where T <: Union{String, Vector{Char}}
+    StabilizerCode(S_Pauli::Vector{T}, char_vec::Union{Vector{zzModRingElem}, Missing}=missing) where T <: Union{String, Vector{Char}}
 
 Return the stabilizer code whose stabilizers are determined by the vector of Pauli strings `S_Pauli` and signs by `char_vec`.
 
@@ -284,7 +284,7 @@ Return the stabilizer code whose stabilizers are determined by the vector of Pau
 * Any +/- 1 characters in front of each stabilizer are stripped. No check is done
   to make sure these signs agree with the ones computed using the character vector.
 """
-function StabilizerCode(S_Pauli::Vector{T}, char_vec::Union{Vector{nmod}, Missing}=missing,
+function StabilizerCode(S_Pauli::Vector{T}, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
     logs_alg::Symbol=:stnd_frm) where T <: Union{String, Vector{Char}}
 
     S_Pauli_stripped = _process_strings(S_Pauli)
@@ -294,11 +294,11 @@ function StabilizerCode(S_Pauli::Vector{T}, char_vec::Union{Vector{nmod}, Missin
 end
 
 """
-    StabilizerCode(S::fq_nmod_mat, char_vec::Union{Vector{nmod}, Missing}=missing)
+    StabilizerCode(S::fq_nmod_mat, char_vec::Union{Vector{zzModRingElem}, Missing}=missing)
 
 Return the stabilizer code whose stabilizers is determined by `S` and signs by `char_vec`.
 """
-function StabilizerCode(stabs::CTMatrixTypes, char_vec::Union{Vector{nmod}, Missing}=missing,
+function StabilizerCode(stabs::CTMatrixTypes, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
     logs_alg::Symbol=:stnd_frm)
 
     logs_alg ∈ (:stnd_frm, :VS, :sys_eqs) || throw(ArgumentError("Unrecognized logicals algorithm"))
