@@ -15,7 +15,7 @@
     # Hamming codes
     # Tetra code is Hammingcode(3, 2)
     # random Hamming code
-    F = GF(2)
+    F, _ = finite_field(2)
     C = HammingCode(2, 7)
     col = rand(1:length(C))
     # columns are 1, 2, ... 2^r - 1 written as binary numerals

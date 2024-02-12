@@ -9,35 +9,38 @@
 #############################
 # TODO: these consctructors reuse a lot of the same code, extract
 
+# # Examples
+# ```julia
+# julia> q = 2; n = 15; b = 3; δ = 4;
+# julia> cosets = defining_set([i for i = b:(b + δ - 2)], q, n, false);
+# julia> C = CyclicCode(q, n, cosets)
+# ```
 """
     CyclicCode(q::Int, n::Int, cosets::Vector{Vector{Int}})
 
-Return the CyclicCode of length `n` over `GF(q)` with `q`-cyclotomic cosets `cosets`.
+Return the CyclicCode of length `n` over `finite_field(q)` with `q`-cyclotomic cosets `cosets`.
 
 # Notes
 * This function will auto determine if the constructed code is BCH or Reed-Solomon
 and call the appropriate constructor.
-
-# Examples
-```julia
-julia> q = 2; n = 15; b = 3; δ = 4;
-julia> cosets = defining_set([i for i = b:(b + δ - 2)], q, n, false);
-julia> C = CyclicCode(q, n, cosets)
-```
 """
 function CyclicCode(q::Int, n::Int, cosets::Vector{Vector{Int}})
     (q <= 1 || n <= 1) && throw(DomainError("Invalid parameters passed to CyclicCode constructor: q = $q, n = $n."))
-    factors = Nemo.factor(q)
-    length(factors) == 1 || throw(DomainError("There is no finite field of order $q."))
-    (p, t), = factors
+    # factors = Nemo.factor(q)
+    # length(factors) == 1 || throw(DomainError("There is no finite field of order $q."))
+    # (p, t), = factors
 
-    # t == 1 ? (F = GF(p);) : (F = GF(p, t, :α);)
-    F = GF(p, t, :ω)
+    # F, _ = finite_field(p, t, :ω)
+    F, _ = finite_field(q, :α)
     deg = ord(n, q)
-    E = GF(p, t * deg, :α)
+    # E, α = finite_field(p, t * deg, :α)
+    E, α = finite_field(q^deg, :α)
     # α = gen(E)
-    α = Oscar.Hecke.primitive_element(E)
+    # α = Oscar.Hecke.primitive_element(E)
     R, x = polynomial_ring(E, :x)
+    if order(E) == order(F) && is_prime(q)
+        α = E(2)
+    end
     β = α^(div(BigInt(q)^deg - 1, n))
 
     def_set = sort!(reduce(vcat, cosets))
@@ -63,14 +66,15 @@ function CyclicCode(q::Int, n::Int, cosets::Vector{Vector{Int}})
     size(H) == (n - k, k) && (temp = H; H = tr_H; tr_H = temp;)
     iszero(G * tr_H) || error("Generator and parity check matrices are not transpose orthogonal.")
 
-    if t == 1
-        F = GF(p)
-        G = change_base_ring(F, G)
-        H = change_base_ring(F, H)
-        G_stand = change_base_ring(F, G_stand)
-        H_stand = change_base_ring(F, H_stand)
-        ismissing(P) || (P = change_base_ring(F, P);)
-    end
+    # if t == 1
+    # if degree(F) == 1
+    #     # F, _ = finite_field(p)
+    #     G = change_base_ring(F, G)
+    #     H = change_base_ring(F, H)
+    #     G_stand = change_base_ring(F, G_stand)
+    #     H_stand = change_base_ring(F, H_stand)
+    #     ismissing(P) || (P = change_base_ring(F, P);)
+    # end
 
     if δ >= 2 && def_set == defining_set([i for i = b:(b + δ - 2)], q, n, true)
         if deg == 1 && n == q - 1
@@ -104,12 +108,16 @@ function CyclicCode(n::Int, g::FqPolyRingElem)
 
     F = base_ring(R)
     q = Int(order(F))
-    p = Int(characteristic(F))
-    t = Int(degree(F))
+    # p = Int(characteristic(F))
+    # t = Int(degree(F))
     deg = ord(n, q)
-    E = GF(p, t * deg, :α)
+    # E, α = finite_field(p, t * deg, :α)
+    E, α = finite_field(q^deg, :α)
+    if order(E) == order(F) && is_prime(q)
+        α = E(2)
+    end
     # α = gen(E)
-    α = Oscar.Hecke.primitive_element(E)
+    # α = Oscar.Hecke.primitive_element(E)
     β = α^(div(q^deg - 1, n))
     ord_E = Int(order(E))
     R_E, y = polynomial_ring(E, :y)
@@ -138,14 +146,14 @@ function CyclicCode(n::Int, g::FqPolyRingElem)
     size(H) == (n - k, k) && (temp = H; H = tr_H; tr_H = temp;)
     iszero(G * tr_H) || error("Generator and parity check matrices are not transpose orthogonal.")
 
-    if t == 1
-        F = GF(p)
-        G = change_base_ring(F, G)
-        H = change_base_ring(F, H)
-        G_stand = change_base_ring(F, G_stand)
-        H_stand = change_base_ring(F, H_stand)
-        ismissing(P) || (P = change_base_ring(F, P);)
-    end
+    # if t == 1
+    #     F, _ = finite_field(p)
+    #     G = change_base_ring(F, G)
+    #     H = change_base_ring(F, H)
+    #     G_stand = change_base_ring(F, G_stand)
+    #     H_stand = change_base_ring(F, H_stand)
+    #     ismissing(P) || (P = change_base_ring(F, P);)
+    # end
 
     if δ >= 2 && def_set == defining_set([i for i = b:(b + δ - 2)], q, n, true)
         if deg == 1 && n == q - 1
@@ -168,47 +176,51 @@ end
 # self orthogonal cyclic codes are even-like
 # does this require them too have even minimum distance?
 # self orthogonal code must contain all of its self orthogonal q-cosets and at least one of every q-coset pair
-"""
-    BCHCode(q::Int, n::Int, δ::Int, b::Int=0)
 
-Return the BCHCode of length `n` over `GF(q)` with design distance `δ` and offset
+# # Examples
+# ```julia
+# julia> q = 2; n = 15; b = 3; δ = 4;
+# julia> B = BCHCode(q, n, δ, b)
+# [15, 5, ≥7; 1]_2 BCH code over splitting field finite_field(16).
+# 2-Cyclotomic cosets:
+#         C_1 ∪ C_3 ∪ C_5
+# Generator polynomial:
+#         x^10 + x^8 + x^5 + x^4 + x^2 + x + 1
+# Generator matrix: 5 × 15
+#         1 1 1 0 1 1 0 0 1 0 1 0 0 0 0
+#         0 1 1 1 0 1 1 0 0 1 0 1 0 0 0
+
+#         0 0 1 1 1 0 1 1 0 0 1 0 1 0 0
+#         0 0 0 1 1 1 0 1 1 0 0 1 0 1 0
+#         0 0 0 0 1 1 1 0 1 1 0 0 1 0 1
+# ```
+"""
+    BCHCode(q::Int, n::Int, δ::Int, b::Int = 0)
+
+Return the BCHCode of length `n` over `finite_field(q)` with design distance `δ` and offset
 `b`.
 
 # Notes
 * This function will auto determine if the constructed code is Reed-Solomon
 and call the appropriate constructor.
-
-# Examples
-```julia
-julia> q = 2; n = 15; b = 3; δ = 4;
-julia> B = BCHCode(q, n, δ, b)
-[15, 5, ≥7; 1]_2 BCH code over splitting field GF(16).
-2-Cyclotomic cosets:
-        C_1 ∪ C_3 ∪ C_5
-Generator polynomial:
-        x^10 + x^8 + x^5 + x^4 + x^2 + x + 1
-Generator matrix: 5 × 15
-        1 1 1 0 1 1 0 0 1 0 1 0 0 0 0
-        0 1 1 1 0 1 1 0 0 1 0 1 0 0 0
-
-        0 0 1 1 1 0 1 1 0 0 1 0 1 0 0
-        0 0 0 1 1 1 0 1 1 0 0 1 0 1 0
-        0 0 0 0 1 1 1 0 1 1 0 0 1 0 1
-```
 """
-function BCHCode(q::Int, n::Int, δ::Int, b::Int=0)
+function BCHCode(q::Int, n::Int, δ::Int, b::Int = 0)
     δ >= 2 || throw(DomainError("BCH codes require δ ≥ 2 but the constructor was given δ = $δ."))
     (q <= 1 || n <= 1) && throw(DomainError("Invalid parameters passed to BCHCode constructor: q = $q, n = $n."))
-    factors = Nemo.factor(q)
-    length(factors) == 1 || throw(DomainError("There is no finite field of order $q."))
-    (p, t), = factors
+    # factors = Nemo.factor(q)
+    # length(factors) == 1 || throw(DomainError("There is no finite field of order $q."))
+    # (p, t), = factors
 
-    # t == 1 ? (F = GF(p);) : (F = GF(p, t, :α);)
-    F = GF(p, t, :α)
+    # F, _ = finite_field(p, t, :ω)
+    F, _ = finite_field(q, :α)
     deg = ord(n, q)
-    E = GF(p, t * deg, :α)
+    # E, α = finite_field(p, t * deg, :α)
+    E, α = finite_field(q^deg, :α)
+    if order(E) == order(F) && is_prime(q)
+        α = E(2)
+    end
     # α = gen(E)
-    α = Oscar.Hecke.primitive_element(E)
+    # α = Oscar.Hecke.primitive_element(E)
     R, x = polynomial_ring(E, :x)
     β = α^(div(q^deg - 1, n))
 
@@ -236,14 +248,15 @@ function BCHCode(q::Int, n::Int, δ::Int, b::Int=0)
     size(H) == (n - k, k) && (temp = H; H = tr_H; tr_H = temp;)
     iszero(G * tr_H) || error("Generator and parity check matrices are not transpose orthogonal.")
 
-    if t == 1
-        F = GF(p)
-        G = change_base_ring(F, G)
-        H = change_base_ring(F, H)
-        G_stand = change_base_ring(F, G_stand)
-        H_stand = change_base_ring(F, H_stand)
-        ismissing(P) || (P = change_base_ring(F, P);)
-    end
+    # if t == 1
+    # if degree(F) == 1
+    #     # F, _ = finite_field(p)
+    #     G = change_base_ring(F, G)
+    #     H = change_base_ring(F, H)
+    #     G_stand = change_base_ring(F, G_stand)
+    #     H_stand = change_base_ring(F, H_stand)
+    #     ismissing(P) || (P = change_base_ring(F, P);)
+    # end
 
     if deg == 1 && n == q - 1
         d = n - k + 1
@@ -257,44 +270,46 @@ function BCHCode(q::Int, n::Int, δ::Int, b::Int=0)
         H, G_stand, H_stand, P, missing)
 end
 
+
+# # Examples
+# ```julia
+# julia> ReedSolomonCode(8, 3, 0)
+# [7, 5, ≥3; 0]_8 Reed Solomon code.
+# 8-Cyclotomic cosets:
+#         C_0 ∪ C_1
+# Generator polynomial:
+#         x^2 + (α + 1)*x + α
+# Generator matrix: 5 × 7
+#         α α + 1 1 0 0 0 0
+#         0 α α + 1 1 0 0 0
+#         0 0 α α + 1 1 0 0
+#         0 0 0 α α + 1 1 0
+#         0 0 0 0 α α + 1 1
+
+# julia> ReedSolomonCode(13, 5, 1)
+# [12, 8, ≥5; 1]_13 Reed Solomon code.
+# 13-Cyclotomic cosets:
+#         C_1 ∪ C_2 ∪ C_3 ∪ C_4
+# Generator polynomial:
+#         x^4 + 9*x^3 + 7*x^2 + 2*x + 10
+# Generator matrix: 8 × 12
+#         10 2 7 9 1 0 0 0 0 0 0 0
+#         0 10 2 7 9 1 0 0 0 0 0 0
+#         0 0 10 2 7 9 1 0 0 0 0 0
+#         0 0 0 10 2 7 9 1 0 0 0 0
+#         0 0 0 0 10 2 7 9 1 0 0 0
+#         0 0 0 0 0 10 2 7 9 1 0 0
+#         0 0 0 0 0 0 10 2 7 9 1 0
+#         0 0 0 0 0 0 0 10 2 7 9 1
+# ```
+# TODO: provide a function to allow the user to redo the code with a given primitive root
+# TODO: also pass in a root
 """
-    ReedSolomonCode(q::Int, δ::Int, b::Int=0)
+    ReedSolomonCode(q::Int, δ::Int, b::Int = 0)
 
-Return the ReedSolomonCode over `GF(q)` with distance `d` and offset `b`.
-
-# Examples
-```julia
-julia> ReedSolomonCode(8, 3, 0)
-[7, 5, ≥3; 0]_8 Reed Solomon code.
-8-Cyclotomic cosets:
-        C_0 ∪ C_1
-Generator polynomial:
-        x^2 + (α + 1)*x + α
-Generator matrix: 5 × 7
-        α α + 1 1 0 0 0 0
-        0 α α + 1 1 0 0 0
-        0 0 α α + 1 1 0 0
-        0 0 0 α α + 1 1 0
-        0 0 0 0 α α + 1 1
-
-julia> ReedSolomonCode(13, 5, 1)
-[12, 8, ≥5; 1]_13 Reed Solomon code.
-13-Cyclotomic cosets:
-        C_1 ∪ C_2 ∪ C_3 ∪ C_4
-Generator polynomial:
-        x^4 + 9*x^3 + 7*x^2 + 2*x + 10
-Generator matrix: 8 × 12
-        10 2 7 9 1 0 0 0 0 0 0 0
-        0 10 2 7 9 1 0 0 0 0 0 0
-        0 0 10 2 7 9 1 0 0 0 0 0
-        0 0 0 10 2 7 9 1 0 0 0 0
-        0 0 0 0 10 2 7 9 1 0 0 0
-        0 0 0 0 0 10 2 7 9 1 0 0
-        0 0 0 0 0 0 10 2 7 9 1 0
-        0 0 0 0 0 0 0 10 2 7 9 1
-```
+Return the ReedSolomonCode over `finite_field(q)` with distance `d` and offset `b`.
 """
-function ReedSolomonCode(q::Int, d::Int, b::Int=0)
+function ReedSolomonCode(q::Int, d::Int, b::Int = 0)
     d >= 2 || throw(DomainError("Reed Solomon codes require δ ≥ 2 but the constructor was given d = $d."))
     q > 4 || throw(DomainError("Invalid or too small parameters passed to ReedSolomonCode constructor: q = $q."))
 
@@ -303,13 +318,17 @@ function ReedSolomonCode(q::Int, d::Int, b::Int=0)
     #     error("Reed Solomon codes require n = q - 1.")
     # end
 
-    factors = Nemo.factor(q)
-    length(factors) == 1 || error("There is no finite field of order $q.")
-    (p, t), = factors
+    # factors = Nemo.factor(q)
+    # length(factors) == 1 || error("There is no finite field of order $q.")
+    # (p, t), = factors
 
-    F = GF(p, t, :α)
+    # F, α = finite_field(p, t, :α)
+    F, α = finite_field(q, :α)
+    if is_prime(q)
+        α = F(2)
+    end
     # α = gen(F)
-    α = Oscar.Hecke.primitive_element(F)
+    # α = Oscar.Hecke.primitive_element(F)
     R, x = polynomial_ring(F, :x)
 
     n = q - 1
@@ -688,11 +707,12 @@ function is_cyclic(C::AbstractLinearCode)
     
     ord_F = Int(order(C.F))
     gcd(C.n, ord_F) == 1 || return false
-    (p, t), = Nemo.factor(ord_F)
+    # (p, t), = Nemo.factor(ord_F)
     deg = ord(C.n, ord_F)
-    E = GF(p, t * deg, :α)
+    # E, α = finite_field(p, t * deg, :α)
+    E, α = finite_field(q^deg, :α)
     # α = gen(E)
-    α = Oscar.Hecke.primitive_element(E)
+    # α = Oscar.Hecke.primitive_element(E)
     R, x = polynomial_ring(E, :x)
     # β = α^(div(q^deg - 1, n))
 

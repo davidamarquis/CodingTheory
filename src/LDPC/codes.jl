@@ -71,14 +71,15 @@ results are reproducible.
 function regular_LDPC_code(q::Int, n::Int, l::Int, r::Int; seed::Union{Nothing, Int}=nothing)
     Random.seed!(seed)
     m = divexact(n * l, r)
-    F = if isprime(q)
-        GF(q)
-    else
-        factors = Nemo.factor(q)
-        length(factors) == 1 || throw(DomainError("There is no finite field of order $q"))
-        (p, t), = factors
-        GF(p, t, :α)
-    end
+    # F = if isprime(q)
+    #     GF(q)
+    # else
+    #     factors = Nemo.factor(q)
+    #     length(factors) == 1 || throw(DomainError("There is no finite field of order $q"))
+    #     (p, t), = factors
+    #     GF(p, t, :α)
+    # end
+    F, _ = finite_field(q, :α)
     elems = collect(F)[2:end]
     H = zero_matrix(F, m, n);
     col_sums = zeros(Int, n)

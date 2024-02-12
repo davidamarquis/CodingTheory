@@ -2,7 +2,7 @@
     using Oscar, CodingTheory
 
     # NOTE: circshift is currently commented out, might be deleted in the future
-    # F = GF(2,1)
+    # F, _ = finite_field(2,1)
     # v = matrix(F, 1, 8, [1, 0, 1, 1, 1, 0, 0, 0])
     # @test circshift(v, 1) == matrix(F, 1, 8, [0, 1, 0, 1, 1, 1, 0, 0])
     # @test circshift(v, 2) == matrix(F, 1, 8, [0, 0, 1, 0, 1, 1, 1, 0])
@@ -10,8 +10,8 @@
     # @test circshift(v, 10) == matrix(F, 1, 8, [0, 0, 1, 0, 1, 1, 1, 0])
     # @test circshift(v, -11) == matrix(F, 1, 8, [1, 1, 0, 0, 0, 1, 0, 1])
 
-    GF4 = GF(2, 2, :ω)
-    GF2 = GF(2)
+    GF4, _ = finite_field(2, 2, :ω)
+    GF2, _ = finite_field(2)
 
     M_min_wt = [1 0 0 1 0
               1 1 0 0 0
@@ -104,9 +104,9 @@
     qres, _ = quadratic_residues(3, 11)
     @test qres == [1, 3, 4, 5, 9]
 
-    F = GF(2)
-    E = GF(2, 3, :α)
-    α = gen(E)
+    F, _ = finite_field(2)
+    E, α = finite_field(2, 3, :α)
+    # α = gen(E)
     flag, _ = is_extension(E, F)
     @test flag
     basis = [α^3, α^5, α^6];
@@ -120,8 +120,8 @@
     @test flag
     @test verify_dual_basis(E, F, basis[1], basis[2])
 
-    E = GF(2, 4, :α)
-    α = gen(E)
+    E, α = finite_field(2, 4, :α)
+    # α = gen(E)
     flag, _ = is_extension(E, F)
     @test flag
     basis = [α^3, α^6, α^9, α^12];
@@ -137,9 +137,9 @@
     flag, _ = is_basis(E, F, basis)
     @test flag
 
-    F = GF(3)
-    E = GF(3, 2, :α)
-    α = gen(E)
+    F, _ = finite_field(3)
+    E, α = finite_field(3, 2, :α)
+    # α = gen(E)
     flag, _ = is_extension(E, F)
     @test flag
     basis = [α, α^3];
@@ -155,8 +155,8 @@
     flag, _ = is_basis(E, F, basis)
     @test flag
 
-    E = GF(3, 3, :α);
-    α = gen(E)
+    E, α = finite_field(3, 3, :α);
+    # α = gen(E)
     flag, _ = is_extension(E, F)
     @test flag
     basis = [α^2, α^6, α^18];
@@ -186,9 +186,9 @@
     @test flag
     @test is_normal_basis(E, F, basis)
 
-    F = GF(5)
-    E = GF(5, 2, :α);
-    α = gen(E)
+    F, _ = finite_field(5)
+    E, α = finite_field(5, 2, :α);
+    # α = gen(E)
     flag, _ = is_extension(E, F)
     @test flag
     basis = [α, α^5];
@@ -225,7 +225,7 @@
     @test are_equivalent_basis(basis, basis2)
 
     # TODO: work these in
-    # F8 = GF(2, 3, :α)
+    # F8, α = finite_field(2, 3, :α)
     # β = [F8(1), α, α^6]
     # λ = dual_basis(F8, F, β)
     # D = CodingTheory._expansion_dict(F8, F, λ)
@@ -255,11 +255,11 @@
     # @test D == D2
 
 
-    F = GF(2)
+    F, _ = finite_field(2)
     flag, _ = is_extension(E, F)
     @test !flag
 
-    F = GF(2)
+    F, _ = finite_field(2)
     S, x = polynomial_ring(F, :x)
     l = 3
     R = residue_ring(S, x^l - 1)

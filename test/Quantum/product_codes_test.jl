@@ -3,7 +3,7 @@
 
     # Degenerate Quantum LDPC Codes With Good Finite Length Performance
     # Example A1
-    F = GF(2)
+    F, _ = finite_field(2)
     S, x = PolynomialRing(F, :x)
     l = 127
     R = residue_ring(S, x^l - 1)
@@ -152,9 +152,8 @@
     @test weight_flag
 
     # [[400,16,6]] code from Table 1 of https://doi.org/10.1103/PhysRevResearch.2.043423
-    H = matrix(
-        GF(2),
-        [
+    F, _ = finite_field(2)
+    H = matrix(F, [
             1 1 0 0 1 1 0 0 0 0 0 0 0 0 0 0;
             0 0 1 0 0 0 1 1 0 0 0 0 1 0 0 0;
             0 0 0 1 1 0 1 0 0 0 0 0 0 1 0 0;
@@ -166,9 +165,7 @@
             0 0 1 1 0 0 0 0 0 0 0 1 0 0 0 1;
             0 0 0 0 1 0 0 0 0 1 1 1 0 0 0 0;
             0 1 0 0 0 0 1 0 0 0 1 0 0 0 1 0;
-            1 0 1 0 0 0 0 0 0 1 0 0 0 0 1 0
-        ]
-    )
+            1 0 1 0 0 0 0 0 0 1 0 0 0 0 1 0])
     HGP = HypergraphProductCode(LinearCode(H, true))
 
     lx, lz = Quintavalle_basis(HGP)
@@ -205,7 +202,7 @@
     @test weight_flag
 
     # product codes
-    F = GF(2);
+    F, _ = finite_field(2);
     h = matrix(F, [1 1]);
     id = identity_matrix(F, 2);
     H_X = vcat(

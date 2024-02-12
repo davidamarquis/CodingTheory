@@ -1,7 +1,7 @@
 @testset "Classical/quasi-cyclic_code.jl" begin
     using Oscar, CodingTheory
 
-    F = GF(2)
+    F, _ = finite_field(2)
     v = matrix(F, 1, 8, [1, 0, 1, 1, 1, 0, 0, 0])
     v2 = matrix(F, 1, 8, [1, 1, 1, 0, 0, 0, 1, 0])
     C = QuasiCyclicCode([v, v2], 2, false)

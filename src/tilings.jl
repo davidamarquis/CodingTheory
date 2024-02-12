@@ -40,20 +40,20 @@ Return the reflection group with fundamental simplex specified by `coxmat`.
 """
 function simplex_group(coxmat::CoxeterMatrix)
     n = size(coxmat)[1]
-    # f = Globals.FreeGroup(n)
-    # gens = Globals.GeneratorsOfGroup(f)
-    f = free_group(n)
-    gen = gens(f)
+    f = Globals.FreeGroup(n)
+    gens = Globals.GeneratorsOfGroup(f)
+    # f = free_group(n)
+    # gen = gens(f)
     relations = []
-    for (i, g1) in enumerate(gen)
-        for (j, g2) in enumerate(gen)
+    for (i, g1) in enumerate(gens)
+        for (j, g2) in enumerate(gens)
             if j >= i append!(relations, [(g1 * g2)^coxmat[i, j]]) end
         end
     end
-    # g = f / GapObj(relations)
-    g = f / relations
-    # return ReflectionGroup(g, Globals.GeneratorsOfGroup(g), coxmat)
-    return ReflectionGroup(g, gens(g), coxmat)
+    g = f / GapObj(relations)
+    # g = f / relations
+    return ReflectionGroup(g, Globals.GeneratorsOfGroup(g), coxmat)
+    # return ReflectionGroup(g, gens(g), coxmat)
 end
 
 """

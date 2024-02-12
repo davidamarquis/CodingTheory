@@ -2,7 +2,7 @@
     using Oscar, CodingTheory
 
     # example from Ryan & Lin
-    F = GF(2)
+    F, _ = finite_field(2)
     H = matrix(F, [
         1 1 1 1 0 0 0 0 0 0;
         1 0 0 0 1 1 1 0 0 0;

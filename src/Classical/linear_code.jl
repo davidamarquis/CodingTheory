@@ -105,7 +105,7 @@ function LinearCode(G::Matrix{Int}, q::Int, parity::Bool=false)
     (length(factors) == 1 && q > 1) || throw(ArgumentError("There is no finite field of order $q."))
 
     p, m = first(factors)
-    F = m == 1 ? GF(p) : GF(p, m, :ω)
+    F, _ = m == 1 ? finite_field(p) : finite_field(p, m, :ω)
     G1 = matrix(F, G)
     rref!(G1)
     return LinearCode(G1, parity)

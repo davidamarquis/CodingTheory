@@ -1173,7 +1173,7 @@ function MacWilliams_identity(C::AbstractLinearCode, W::WeightEnumerator, dual::
         else
             K, ω = cyclotomic_field(Int(characteristic(C.F)), :ω)
             R, vars = polynomial_ring(K, q)
-            prime_field = GF(Int(characteristic(C.F)))
+            prime_field, _ = finite_field(Int(characteristic(C.F)))
             _, λ = primitivebasis(C.F, prime_field)
             elms = collect(C.F)
             func_args = []

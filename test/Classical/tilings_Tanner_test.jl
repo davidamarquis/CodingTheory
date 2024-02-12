@@ -4,7 +4,7 @@
 
     min_index = 250;
     max_index = 5000;
-    F = GF(2)
+    F, _ = finite_field(2)
 
     # first test case
     local_code = HammingCode(2, 3);
@@ -37,7 +37,7 @@
     # x = GAP.Globals.GeneratorMat(C1)
     # y = [GAP.Globals.Int(x[i, j]) for i in 1:2, j in 1:5]
     y = [0 0 1 1 1; 1 1 0 1 1]
-    F = GF(2)
+    F, _ = finite_field(2)
     z = matrix(F, y)
     C_loc = LinearCode(z)
     G_test = Graphs.complete_graph(6)

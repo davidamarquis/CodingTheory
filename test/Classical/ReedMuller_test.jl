@@ -1,7 +1,7 @@
 @testset "Classical/ReedMuller.jl" begin
     using Oscar, CodingTheory
 
-    F = GF(2)
+    F, _ = finite_field(2)
     # Huffman, Pless, p. 34
     # identity used for RM(1, 1)
     @test CodingTheory._Reed_Muller_generator_matrix(1, 1, true) == matrix(F,

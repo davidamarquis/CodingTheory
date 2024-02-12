@@ -1,7 +1,7 @@
 @testset "Classical/linear_code.jl" begin
     using Oscar, CodingTheory
 
-    F = GF(2)
+    F, _ = finite_field(2)
     G = matrix(F, [1 0 0 0 0 1 1;
            0 1 0 0 1 0 1;
            0 0 1 0 1 1 0;
@@ -96,8 +96,8 @@
     # expandedcode, entrywiseproductcode, evensubcode
 
     # subfield subcode example from Huffman/Pless
-    K = GF(2, 2, :ω);
-    ω = gen(K)
+    K, ω = finite_field(2, 2, :ω);
+    # ω = gen(K)
     C = Hexacode();
     dual_basis = [ω^2, K(1)]; # dual?
     # BUG: this function is now broken with the Oscar update

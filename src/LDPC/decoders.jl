@@ -9,8 +9,9 @@
 #############################
 
 # Example of using Gallager A and B (out should end up [1 1 1 0 0 0 0]
-# H = matrix(GF(2), [1 1 0 1 1 0 0; 1 0 1 1 0 1 0; 0 1 1 1 0 0 1]);
-# v = matrix(GF(2), 7, 1, [1, 1, 0, 0, 0, 0, 0]);
+# F, _ = finite_field(2)
+# H = matrix(F, [1 1 0 1 1 0 0; 1 0 1 1 0 1 0; 0 1 1 1 0 0 1]);
+# v = matrix(F, 7, 1, [1, 1, 0, 0, 0, 0, 0]);
 # flag, out, iter, vtoc, ctov = GallagerA(H, v, 100);
 # flag, out, iter, vtoc, ctov = GallagerB(H, v, 100);
 # nm = MPNoiseModel(:BSC, 1/7)
@@ -467,7 +468,8 @@ end
 using Plots: plot, savefig, xticks, yticks, xticks!, yticks!
 function testsimulation(figfilename = "test.png")
     # H = paritycheckmatrix(regularLDPCCode(500, 6, 3));
-    H = matrix(GF(2), 10, 20, [1 0 1 0 0 1 0 0 0 1 1 0 0 0 0 0 0 0 0 0;
+    F, _ = finite_field(2)
+    H = matrix(F, 10, 20, [1 0 1 0 0 1 0 0 0 1 1 0 0 0 0 0 0 0 0 0;
                                0 1 0 1 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0;
                                0 0 1 0 1 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0;
                                1 0 0 1 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0;

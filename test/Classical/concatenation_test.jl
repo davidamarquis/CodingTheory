@@ -3,7 +3,7 @@
 
     # same field examples come from https://benjamin-hackl.at/downloads/BA-Thesis_Hackl.pdf
     # "Concatenated Error Correcting Codes: Galois and Binary Concatenation"
-    F = GF(2)
+    F, _ = finite_field(2)
     Ham = matrix(F, 4, 8, [
         1 0 0 0 0 1 1 1;
         0 1 0 0 1 0 1 1;
@@ -101,7 +101,7 @@
     # Bossert example 9.2
     A1 = extend(HammingCode(2, 3))
     A2 = RepetitionCode(4, 8)
-    A2_e = expanded_code(A2, GF(2), basis(A2.F, GF(2)))
+    A2_e = expanded_code(A2, F, basis(A2.F, F))
     outers = [A1, A2_e]
     inners = [RepetitionCode(2, 4), SPCCode(2, 4)]
     C = concatenate(outers, inners)
@@ -116,14 +116,14 @@
 
     # Huffman and Pless, example 5.5.2
     # Note that when the inner code is an identity code, the expanded code should already be the final answer. Also test if the generalized concatenate gives the same answer as the usual concatenate
-    G = matrix(GF(2), [1  0  0  0  0  0  1  0  0  1  0  1
+    G = matrix(F, [1  0  0  0  0  0  1  0  0  1  0  1
                        0  1  0  0  0  0  0  1  1  1  1  1
                        0  0  1  0  0  0  0  1  1  0  0  1
                        0  0  0  1  0  0  1  1  0  1  1  1
                        0  0  0  0  1  0  0  1  0  1  1  0
                        0  0  0  0  0  1  1  1  1  1  0  1])
     C = Hexacode()
-    Ce = expanded_code(C, GF(2), basis(C.F, GF(2)))
+    Ce = expanded_code(C, F, basis(C.F, F))
     @test Ce.G == G
     C1 = concatenate([Ce], [IdentityCode(2, 2)]) # Generalized concat, pre-expanded
     @test C1.G == G
