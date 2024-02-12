@@ -28,7 +28,7 @@ import Oscar: dual, is_prime, factor, transpose, order, polynomial, nrows, ncols
     lift, quo, VectorSpace, dimension, extend, support, complement, polynomial_ring,
     is_regular, iscyclic, genus, density, isdegenerate, index, generators, copy, issubfield, ⊗,
     girth, generator_matrix, polynomial_ring, is_primitive, normal_subgroups, vector_space,
-    tensor_product, gens, dim, is_isomorphic
+    tensor_product, gens, dim, is_isomorphic, splitting_field
 import Oscar.Nemo: exponent_vectors
 import Oscar.GAP: GapObj, Globals, Packages
 import Oscar.GAP: GapObj, Globals, Packages

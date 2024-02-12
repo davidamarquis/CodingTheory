@@ -21,7 +21,7 @@ function _weight_enumerator_BF_Q(G::CTMatrixTypes, char_vec::Vector{zzModRingEle
     p = Int(characteristic(E))
     is_even(p) ? nth = 2 * p : nth = p
     if ismissing(R)
-        K, ω = CyclotomicField(nth, :ω)
+        K, ω = cyclotomic_field(nth, :ω)
         R, vars = polynomial_ring(K, ord_E)
     else
         ω = gen(base_ring(R))
@@ -241,7 +241,7 @@ function weight_enumerator_Q(T::Trellis, type::Symbol=:complete)
 
     p = Int(characteristic(T.code.E))
     is_even(p) ? nth = 2 * p : nth = p
-    K, ω = CyclotomicField(nth, :ω)
+    K, ω = cyclotomic_field(nth, :ω)
     R, vars = polynomial_ring(K, length(elms))
 
     n = T.code.n

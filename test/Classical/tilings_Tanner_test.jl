@@ -1,7 +1,6 @@
 @testset "Classical/tilings.jl & Classical/Tanner.jl" begin
-    using Oscar, CodingTheory, Graphs, GAP
-    GAP.Packages.load("LINS");
-    # GAP.Packages.load("GUAVA")
+    using Oscar, CodingTheory, Graphs
+    CodingTheory.Oscar.GAP.Packages.load("LINS");
 
     min_index = 250;
     max_index = 5000;
