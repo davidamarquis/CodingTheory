@@ -258,7 +258,7 @@ function FpmattoJulia(M::CTMatrixTypes)
 end
 FpmattoJulia(M::fpMatrix) = data.(M)
 
-function _non_pivot_cols(A::CTMatrixTypes, type::Symbol=:nsp)
+function _non_pivot_cols(A::CTMatrixTypes, type::Symbol = :nsp)
     type ∈ [:sp, :nsp]
     if type == :sp
         return setdiff(collect(1:ncols(A)), [x.pos[1] for x in A])

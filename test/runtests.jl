@@ -13,12 +13,12 @@ using Test
 # include("Classical/cyclic_code_test.jl")
 # include("Classical/quasi-cyclic_code_test.jl")
 # include("Classical/tilings_Tanner_test.jl")
-# BUG: expanded code from above
-# include("Classical/concatenation_test.jl")
+# # BUG: expanded code from above
+# # include("Classical/concatenation_test.jl")
 
 # include("LDPC/codes_test.jl")
 
-# include("Quantum/stabilizer_code_test.jl")
+include("Quantum/stabilizer_code_test.jl")
 include("Quantum/misc_known_codes_test.jl")
 include("Quantum/product_codes_test.jl")
 include("Quantum/subsystem_code_test.jl")

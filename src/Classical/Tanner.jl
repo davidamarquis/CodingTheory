@@ -11,7 +11,8 @@ Return the Tanner graph of the matrix `H` as a `Figure` object.
 """
 function Tanner_graph_plot(H::Union{T, Matrix{Int}}) where T <: CTMatrixTypes
     # convert H to A
-    M = FpmattoJulia(H)
+    # M = FpmattoJulia(H)
+    M = data.(H)
     nr, nc = size(M)
     A = zeros(Int, nr + nc, nr + nc)
     # bottom left corner
@@ -70,7 +71,8 @@ matrix `H` along with the indices of the left and right vertices representing
 the bits and parity checks, respectively.
 """
 function Tanner_graph(H::Union{fqPolyRepMatrix, Matrix{Int}})
-    typeof(H) <: fqPolyRepMatrix ? (I = FpmattoJulia(H);) : (I = H;)
+    # typeof(H) <: fqPolyRepMatrix ? (I = FpmattoJulia(H);) : (I = H;)
+    typeof(H) <: fqPolyRepMatrix ? (I = data.(H);) : (I = H;)
     I_tr = transpose(I)
     # TODO: fix B - no zeros for this type
     B = vcat(hcat(zeros(Int, size(I_tr)), I), hcat(I_tr, zeros(Int, size(I))))
