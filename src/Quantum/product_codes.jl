@@ -14,7 +14,7 @@
 Return the hypergraph product code of matrices `A` and `B` whose signs are determined by `char_vec`.
 """
 function HypergraphProductCode(A::CTMatrixTypes, B::CTMatrixTypes, char_vec::Union{Vector{zzModRingElem},
-        Missing}=missing, logs_alg::Symbol=:stnd_frm)
+        Missing} = missing, logs_alg::Symbol = :stnd_frm)
 
     logs_alg ∈ [:stnd_frm, :VS, :sys_eqs] || throw(ArgumentError("Unrecognized logicals algorithm"))
     F = base_ring(A)

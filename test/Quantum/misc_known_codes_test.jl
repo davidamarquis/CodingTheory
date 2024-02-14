@@ -1,5 +1,5 @@
 @testset "Quantum/misc_known_codes.jl" begin
-    using CodingTheory
+    using CodingTheory, JLD2
 
     S = Q9143()
     @test S.n == 9

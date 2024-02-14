@@ -31,7 +31,6 @@ import Oscar: dual, is_prime, factor, transpose, order, polynomial, nrows, ncols
     tensor_product, gens, dim, is_isomorphic, splitting_field
 import Oscar.Nemo: exponent_vectors
 import Oscar.GAP: GapObj, Globals, Packages
-import Oscar.GAP: GapObj, Globals, Packages
 import Base: circshift, iseven, show, length, in, zeros, ⊆, /, *, ==, ∩, +, -, copy, isequal, ∘
 import CairoMakie: save
 import Combinatorics: powerset
