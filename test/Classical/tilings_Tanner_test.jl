@@ -50,7 +50,7 @@
     # third test case
     g = r_s_group(5, 4)
     test_mat = CodingTheory.CoxeterMatrix(3, [1, 5, 2, 1, 4, 1])
-    @test g.coxmat == test_mat
+    @test g.cox_mat == test_mat
     subgroups = normal_subgroups(g, 100)
     @test length(subgroups) == 7
     filter!(x -> is_fixed_point_free(x, g), subgroups)
@@ -59,7 +59,7 @@
     # fourth test case
     g = r_s_group(8, 3)
     test_mat = CodingTheory.CoxeterMatrix(3, [1, 8, 2, 1, 3, 1])
-    @test g.coxmat == test_mat
+    @test g.cox_mat == test_mat
     subgroups = normal_subgroups(g, 100)
     @test length(subgroups) == 10
     filter!(x -> is_fixed_point_free(x, g), subgroups)
@@ -68,7 +68,7 @@
     # fifth test case
     g = triangle_group(4, 3, 3)
     test_mat = CodingTheory.CoxeterMatrix(3, [1, 4, 3, 1, 3, 1])
-    @test g.coxmat == test_mat
+    @test g.cox_mat == test_mat
     subgroups = normal_subgroups(g, 100)
     @test length(subgroups) == 6
     filter!(x -> is_fixed_point_free(x, g), subgroups)
@@ -77,7 +77,7 @@
     # sixth test case
     g = q_r_s_group(4, 3, 5)
     test_mat = CodingTheory.CoxeterMatrix(4, [1, 4, 2, 2, 1, 3, 2, 1, 5, 1])
-    @test g.coxmat == test_mat
+    @test g.cox_mat == test_mat
     subgroups = normal_subgroups(g, 100)
     @test length(subgroups) == 6
     filter!(x -> is_fixed_point_free(x, g), subgroups)
@@ -86,7 +86,7 @@
     # seventh test case
     g = star_tetrahedron_group(5, 3, 3)
     test_mat = CodingTheory.CoxeterMatrix(4, [1, 5, 3, 3, 1, 2, 2, 1, 2, 1])
-    @test g.coxmat == test_mat
+    @test g.cox_mat == test_mat
     subgroups = normal_subgroups(g, 100)
     @test length(subgroups) == 3
     filter!(x -> is_fixed_point_free(x, g), subgroups)

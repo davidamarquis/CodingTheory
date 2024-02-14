@@ -395,6 +395,7 @@ Return the `X`-stabilizer matrix of the CSS code.
 X_stabilizers(S::T) where {T <: AbstractSubsystemCode} = X_stabilizers(CSSTrait(T), S)
 X_stabilizers(::IsCSS, S::AbstractSubsystemCode) = S.X_stabs
 X_stabilizers(::IsNotCSS, S::AbstractSubsystemCode) = error("Only valid for CSS codes.")
+# TODO: change valid to defined throughout
 
 """
     Z_stabilizers(S::AbstractSubsystemCode)
@@ -847,7 +848,7 @@ function _get_signs(A::CTMatrixTypes, char_vec::Vector{zzModRingElem})
     signs = Vector{Int64}()
     for r in 1:nrows(A)
         parity = R(0)
-        for c = 1:nc
+        for c in 1:nc
             !iszero(A[r, c]) && (parity += char_vec[c];)
         end
         append!(signs, parity)
@@ -855,7 +856,7 @@ function _get_signs(A::CTMatrixTypes, char_vec::Vector{zzModRingElem})
     return signs
 end
 
-function _splitstabilizers(S::T, signs::Vector{zzModRingElem}) where T <: CTMatrixTypes
+function _split_stabilizers(S::T, signs::Vector{zzModRingElem}) where T <: CTMatrixTypes
     X_stabs = Vector{T}()
     X_signs = Vector{zzModRingElem}()
     Z_stabs = Vector{T}()
@@ -908,14 +909,14 @@ end
 # `Vector{Int}` for the three sets of stabilizers and signs, respectively.
 # An empty set of stabilizers is returned as type `Vector{fq_nmod_mat}`.
 # """
-# splitstabilizers(S::AbstractSubsystemCode) = _splitstabilizers(S.stabs, S.signs)
+# splitstabilizers(S::AbstractSubsystemCode) = _split_stabilizers(S.stabs, S.signs)
 
 # TODO: rethink how I'm returning all of this and the bottom trim stuff
 # probably need to simply redo the above to simply start with zero matrix
 # and then either set first or add to it (return matrix[2:end, L])
 # TODO: need more robust CSS detection, what if I add and X and Z stabilizer and use it implace of the Z
 function _is_CSS_symplectic(stabs::T, signs::Vector{zzModRingElem}, trim::Bool=true) where T <: CTMatrixTypes
-    X_stabs, X_signs, Z_stabs, Z_signs, mixed_stabs, mixed_signs = _splitstabilizers(stabs, signs)
+    X_stabs, X_signs, Z_stabs, Z_signs, mixed_stabs, mixed_signs = _split_stabilizers(stabs, signs)
     if typeof(mixed_stabs) <: Vector{T}
         if trim
             half = div(ncols(stabs), 2)
@@ -1326,7 +1327,7 @@ function show(io::IO, S::AbstractSubsystemCode)
                 end
             end
         else
-            num_stabs = nrows(S.stabs)
+            num_stabs, nc = size(S.stabs)
             if S.overcomplete
                 println(io, "Stabilizer matrix (overcomplete): $num_stabs × $(S.n)")
             else
@@ -1334,10 +1335,10 @@ function show(io::IO, S::AbstractSubsystemCode)
             end
             for r in 1:num_stabs
                 print(io, "\t chi($(S.signs[r])) ")
-                for c in 1:S.n
-                    if c != S.n
+                for c in 1:nc
+                    if c != nc
                         print(io, "$(S.stabs[r, c]) ")
-                    elseif c == S.n && r != num_stabs
+                    elseif c == nc && r != num_stabs
                         println(io, "$(S.stabs[r, c])")
                     else
                         print(io, "$(S.stabs[r, c])")
