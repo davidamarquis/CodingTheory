@@ -64,7 +64,7 @@ export LogicalTrait, GaugeTrait, HasLogicals, HasNoLogicals, HasGauges, HasNoGau
 include("utils.jl")
 export kronecker_product, Hamming_weight, weight, wt, Hamming_distance, distance,
     dist, tr, expand_matrix, symplectic_inner_product, are_symplectic_orthogonal,
-    Hermitian_inner_product, Hermitian_conjugate_matrix, FpmattoJulia, is_triorthogonal,
+    Hermitian_inner_product, Hermitian_conjugate_matrix, is_triorthogonal,
     print_string_array, print_char_array, print_symplectic_array, pseudoinverse,
     quadratic_to_symplectic, symplectic_to_quadratic, _remove_empty, quadratic_residues,
     digits_to_int, is_basis, primitive_basis, #polynomial_basis, monomial_basis,

@@ -245,18 +245,24 @@ end
 # Return the `CTMatrixTypes` matrix `M` as a Julia Int matrix.
 # """
 # TODO: want to remove and cease use of FpmattoJulia
-function FpmattoJulia(M::CTMatrixTypes)
-    degree(base_ring(M)) == 1 || throw(ArgumentError("Cannot promote higher order elements to the Ints."))
+# function FpmattoJulia(M::CTMatrixTypes)
+#     degree(base_ring(M)) == 1 || throw(ArgumentError("Cannot promote higher order elements to the Ints."))
 
-    A = zeros(Int, size(M))
-    for c in 1:ncols(M)
-        for r in 1:nrows(M)
-            A[r, c] = coeff(M[r, c], 0)
-        end
-    end
-    return A
-end
-FpmattoJulia(M::fpMatrix) = data.(M)
+#     A = zeros(Int, size(M))
+#     for c in 1:ncols(M)
+#         for r in 1:nrows(M)
+#             A[r, c] = coeff(M[r, c], 0)
+#         end
+#     end
+#     return A
+# end
+# FpmattoJulia(M::fpMatrix) = data.(M)
+
+_Flint_matrix_element_to_Julia_int(x::fpMatrix, i::Int, j::Int) = ccall((:nmod_mat_get_entry, Oscar.Nemo.libflint), Int, (Ref{fpMatrix}, Int, Int), x, i - 1 , j - 1)
+
+_Flint_matrix_element_to_Julia_int(x::FqMatrix, i::Int, j::Int) = ccall((:nmod_mat_get_entry, Oscar.Nemo.libflint), Int, (Ref{FqMatrix}, Int, Int), x, i - 1 , j - 1)
+
+ _Flint_matrix_to_Julia_int_matrix(A) = [ _Flint_matrix_element_to_Julia_int(A, i, j) for i in 1:nrows(A), j in 1:ncols(A)]
 
 function _non_pivot_cols(A::CTMatrixTypes, type::Symbol = :nsp)
     type ∈ [:sp, :nsp]

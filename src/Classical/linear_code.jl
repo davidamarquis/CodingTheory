@@ -820,8 +820,7 @@ function is_triply_even(C::AbstractLinearCode)
     Int(order(C.F)) == 2 || throw(ArgumentError("Even-ness is only defined for binary codes."))
 
     # following Ward's divisibility theorem
-    # G = FpmattoJulia(generator_matrix(C))
-    G = data.(generator_matrix(C))
+    G = _Flint_matrix_to_Julia_int_matrix(generator_matrix(C))
     nr, _ = size(G)
     all(wt(view(G, r:r, :)) % 8 == 0
         for r in 1:nr) || (return false;)

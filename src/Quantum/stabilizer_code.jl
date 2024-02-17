@@ -262,17 +262,18 @@ function StabilizerCodeCSS(S_Pauli::Vector{T}, char_vec::Union{Vector{zzModRingE
         error("Provided Pauli strings are not CSS.")
     end
 end
-CSSCode(S_Pauli::Vector{T}, char_vec::Union{Vector{zzModRingElem}, Missing}=missing,
-    logs_alg::Symbol=:stnd_frm) where T <: Union{String, Vector{Char}} = StabilizerCodeCSS(S_Pauli, char_vec, logs_alg)
+CSSCode(S_Pauli::Vector{T}, char_vec::Union{Vector{zzModRingElem}, Missing} = missing,
+    logs_alg::Symbol = :stnd_frm) where T <: Union{String, Vector{Char}} = StabilizerCodeCSS(S_Pauli, char_vec, logs_alg)
 
 """
     StabilizerCodeCSS(S::StabilizerCode)
     CSSCode(S::StabilizerCode)
 
-Return the `[[2n, 2k, S.d <= d <= 2 S.d]]` CSS code derived by splitting the stabilizers of `S`.
+Return the `[[2n, 2k, d <= d' <= 2 d]]` CSS code derived by splitting the stabilizers of the
+`[[n, k, d]]` stabilizer code `S`.
 """
-StabilizerCodeCSS(S::StabilizerCode, logs_alg::Symbol=:stnd_frm) = return StabilizerCodeCSS(S.stabs[:, 1:S.n], S.stabs[:, S.n+1:end], S.char_vec, logs_alg)
-CSSCode(S::StabilizerCode, logs_alg::Symbol=:stnd_frm) = StabilizerCodeCSS(S, logs_alg)
+StabilizerCodeCSS(S::StabilizerCode, logs_alg::Symbol = :stnd_frm) = return StabilizerCodeCSS(S.stabs[:, 1:S.n], S.stabs[:, S.n + 1:end], S.char_vec, logs_alg)
+CSSCode(S::StabilizerCode, logs_alg::Symbol = :stnd_frm) = StabilizerCodeCSS(S, logs_alg)
 
 # entanglement-assisted is not symplectic orthogonal
 """
@@ -399,9 +400,7 @@ function _logicals(stabs::T, dual_gens::T, logs_alg::Symbol=:sys_eqs) where {T<:
     logs_mat = reduce(vcat, [reduce(vcat, logs[i]) for i in 1:length(logs)])
     are_symplectic_orthogonal(stabs, logs_mat) || error("Computed logicals do not commute with the codespace.")
     prod = hcat(logs_mat[:, n + 1:end], -logs_mat[:, 1:n]) * transpose(logs_mat)
-    # sum(FpmattoJulia(prod), dims = 1) == ones(Int, 1, size(prod, 1)) ||
-    #     error("Computed logicals do not have the right commutation relations.")
-    sum(data.(prod), dims = 1) == ones(Int, 1, size(prod, 1)) ||
+    sum(_Flint_matrix_to_Julia_int_matrix(prod), dims = 1) == ones(Int, 1, size(prod, 1)) ||
         error("Computed logicals do not have the right commutation relations.")
     return logs, logs_mat
 end
@@ -446,9 +445,7 @@ function is_CSS_T_code(::IsCSS, S::AbstractStabilizerCode; verbose::Bool = false
     n = S.n
     k = C_X.k
     z = zeros(Int, n)
-    # G = FpmattoJulia(transpose(C_X.G))
-    return transpose(C_X.G)
-    G = data.(transpose(C_X.G))
+    G = _Flint_matrix_to_Julia_int_matrix(transpose(C_X.G))
     for r in 1:k
         verbose && println("r: $r")
         flag = Threads.Atomic{Bool}(true)

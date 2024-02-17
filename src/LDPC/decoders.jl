@@ -70,8 +70,7 @@ function _messagepassinginit(H::S, v::T, chn::Union{Missing, MPNoiseModel}, maxi
     kind ∈ (:SP, :MS) && chn.type == :BAWGNC && !isa(v, Vector{<:AbstractFloat}) && throw(DomainError("Received message should be a vector of floats for BAWGNC."))
     kind ∈ (:SP, :MS) && chn.type == :BSC && !isa(v, Vector{Int}) && !isa(v, CTMatrixTypes) && throw(DomainError("Received message should be a vector of Ints for BSC."))
     
-    # HInt = FpmattoJulia(H)
-    HInt = data.(H)
+    HInt = _Flint_matrix_to_Julia_int_matrix(H)
     w = if T <: CTMatrixTypes
         Int.(data.(v)[:])
     else
