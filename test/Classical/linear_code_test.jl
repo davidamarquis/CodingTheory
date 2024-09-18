@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @testitem "Classical/linear_code.jl" begin
     using Oscar, CodingTheory
 
@@ -45,14 +46,107 @@
         @test is_overcomplete(IdentityCode(5), :H)
         @test !is_overcomplete(HammingCode(2,3))
         @test !is_overcomplete(HammingCode(2,3), :H)
+=======
+# Huffman/Pless
+@testitem "quick" begin 
+  using CodingTheory
+  @testset "quick test" begin
+    do_thing()
+    # @test (2+2)==4
+  end
+end
+
+@testset "quick2" begin 
+  using CodingTheory
+    do_thing()
+    @test (2+2)==4
+  # end
+end
+
+
+@testitem "tests" begin
+    using Oscar, CodingTheory
+
+    # Example 1.2.3 
+    F = GF(2)
+    G = matrix(F, [1 0 0 0 0 1 1;
+                   0 1 0 0 1 0 1;
+                   0 0 1 0 1 1 0;
+                   0 0 0 1 1 1 1]);
+    C = LinearCode(G);
+    @test field(C) == F
+    @test length(C) == 7
+    @test rank(G) == dimension(C)
+    @test cardinality(C) == BigInt(2)^4
+    # @test CodingTheory.dimension(C) == 4
+    @test CodingTheory.dimension(C) == 4
+    @test rate(C) == 4 / 7
+    @test minimum_distance(C) == 3 # Theorem 1.4.2 
+    @test number_correctable_errors(C) == 1 #TODO write as floor((3-1))
+    @test G == generator_matrix(C)
+    H = parity_check_matrix(C)
+    #TODO add test of Hs rank. O/w the G * transpose(H) could pass if H is all zeros
+    @test iszero(G * transpose(H))
+    @test iszero(H * transpose(G))
+    @test C ⊆ C #TODO look up operators
+    D = dual(C)
+    @test !(C ⊆ D)
+    @test !is_subcode(C, D)
+    @test !are_equivalent(C, D)
+    @test are_equivalent(C, C)
+    @test !is_self_dual(C)
+    @test !is_self_orthogonal(C)
+    cw = matrix(F, [1 0 0 0 0 1 1]);
+    @test encode(C, C.G[:, 1]) == cw
+    # these v's are C.G[:, 1], just testing different formats
+    v = [1, 0, 0, 0];
+    @test encode(C, v) == cw
+    v2 = [1; 0; 0; 0];
+    @test encode(C, v2) == cw
+    # this vector is the first row of the generator matrix and should
+    # therefore have zero syndrome
+    v = [1, 0, 0, 0, 0, 1, 1];
+    @test iszero(syndrome(C, v))
+    v = [1; 0; 0; 0; 0; 1; 1];
+    @test iszero(syndrome(C, v))
+    @test is_overcomplete(ZeroCode(5))
+    @test is_overcomplete(IdentityCode(5), :H)
+    @test !is_overcomplete(HammingCode(2,3))
+    @test !is_overcomplete(HammingCode(2,3), :H)
+>>>>>>> 43d6c45 (learn lin)
 
         # lower rank test
         G_and_G = vcat(G, G);
         C_G_and_G = LinearCode(G);
         @test rank(G_and_G) == dimension(C_G_and_G)
         @test G == generator_matrix(C_G_and_G)
+
+        # information set tests:
+        F = Oscar.Nemo.Native.GF(2)
+
+        # a code with G in standard form 
+        Gstd = matrix(F, [1 0; 0 1])
+        Cstd = LinearCode(Gstd);
+        pivs, info_mat=information_set(Cstd)
+        @test pivs==[1,2]
+        @test info_mat==identity_matrix(F, 2)
+
+        # a code with nontrivial pivots:
+        G = matrix(F, [1 1 0 0 0; 0 0 1 1 1])
+        C = LinearCode(G);
+        pivs, info_mat=information_set(C)
+        @test pivs==[1,3]
+        @test info_mat==identity_matrix(F, 2)
+
+        # a code with non-identity information set
+        C_ham = HammingCode(2, 3)
+        pivs, info_mat=information_set(C_ham)
+        expected_info_mat=matrix(F, [1 0 0 0; 1 1 0 0; 0 1 1 0; 1 1 0 1])
+        @test pivs==[1, 4, 6, 7]
+        @test info_mat==expected_info_mat
     end
 
+<<<<<<< HEAD
     @testset "Puncturing examples" begin
         F = GF(2)
         # puncturing examples from Huffman/Pless
@@ -65,6 +159,25 @@
         @test generator_matrix(puncture(C, [1])) == matrix(F, [1 1 1])
         @test generator_matrix(puncture(C, [4])) == matrix(F, [1 0 0; 0 1 1])
     end
+=======
+    # puncturing examples from Huffman/Pless Sec 1.5.1
+    # If G is a generator matrix for C, then a generator matrix for C∗ is obtained from G by deleting column i
+    # What are dim and min weight of C* ?
+    # Only way C*
+    
+    G = matrix(F, [1 1 0 0 0; 0 0 1 1 1])
+    C = LinearCode(G)
+    C_punc1 = puncture(C, [1])
+    C_punc5 = puncture(C, [5])
+    @test generator_matrix(C_punc1) == matrix(F, [1 0 0 0; 0 1 1 1])
+    @test generator_matrix(C_punc5) == matrix(F, [1 1 0 0; 0 0 1 1])
+    # linear_n_k_d_test(C_punc1,4,2,1)
+
+    G = matrix(F, [1 0 0 0; 0 1 1 1])
+    C = LinearCode(G)
+    @test generator_matrix(puncture(C, [1])) == matrix(F, [1 1 1])
+    @test generator_matrix(puncture(C, [4])) == matrix(F, [1 0 0; 0 1 1])
+>>>>>>> 43d6c45 (learn lin)
 
     @testset "Extending and Shortening Property" begin
         F = GF(2)
@@ -131,4 +244,5 @@
 
         # simplex code itself has dimension k(k + 1)/2
         #
+    
 end

@@ -7,6 +7,15 @@
 #############################
         # constructors
 #############################
+function do_thing() 
+    println("hello")
+end 
+
+# function linear_n_k_d_test(code, n, k, d)
+#     @test code.n == n
+#     @test code.k == k
+#     @test code.d == d
+# end
 
 """
     LinearCode(G::CTMatrixTypes, parity::Bool=false, brute_force_WE::Bool=true)
@@ -22,11 +31,16 @@ function LinearCode(G::CTMatrixTypes, parity::Bool=false, brute_force_WE::Bool=t
     G_new = deepcopy(G)
     G_new = _remove_empty(G_new, :rows)
 
+<<<<<<< HEAD
     C = if parity
             H = kernel(G_new, side = :right)
             rnk_H = rank(H)
             # println(rnk_H)
             # display(H)
+=======
+    C = if parity # ???
+            rnk_H, H = right_kernel(G_new)
+>>>>>>> 43d6c45 (learn lin)
         if ncols(H) == rnk_H
             H_tr = transpose(H)
         else
@@ -396,6 +410,19 @@ end
 #############################
      # general functions
 #############################
+function information_set(C::AbstractLinearCode)
+    """
+    Returns the indexs of the pivot columns and an information set which 
+    is the submatrix of G given by these columns.
+    """
+    if C.G == C.G_stand
+        pivot_inds=[x for x ∈ 1:C.n]
+    else
+        nonpivot_inds = _non_pivot_cols(C.G, :nsp) 
+        pivot_inds = [x for x ∈ 1:C.n if x ∉ nonpivot_inds]
+    end
+    return pivot_inds, C.G[:, pivot_inds]
+end
 
 function _standard_form(G::CTMatrixTypes)
     rnk, G_stand, P = _rref_col_swap(G, 1:nrows(G), 1:ncols(G))

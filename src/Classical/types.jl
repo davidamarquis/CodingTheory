@@ -45,7 +45,7 @@ mutable struct LinearCode <: AbstractLinearCode
     u_bound::Int # upper bound on d
     G::CTMatrixTypes
     H::CTMatrixTypes
-    G_stand::CTMatrixTypes
+    G_stand::CTMatrixTypes # cubic time complexity
     H_stand::CTMatrixTypes
     P_stand::Union{CTMatrixTypes, Missing} # permutation matrix for G -> G_stand
     weight_enum::Union{WeightEnumerator, Missing}
