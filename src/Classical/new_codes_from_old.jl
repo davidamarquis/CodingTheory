@@ -517,16 +517,16 @@ function subcode_of_dimension_between_codes(C1::AbstractLinearCode, C2::Abstract
 end
 
 """
-    expanded_code(C::AbstractLinearCode, K::CTFieldTypes, β::Vector{<:CTFieldElem})
+    expanded_code(C::AbstractLinearCode, K::CTFieldTypes, β::Vector{FqFieldElem})
 
 Return the expanded code of `C` constructed by exapnding the generator matrix
 to the subfield `K` using the basis `β` for `field(C)` over `K`.
 """
-function expanded_code(C::AbstractLinearCode, K::CTFieldTypes, β::Vector{<:CTFieldElem})
+function expanded_code(C::AbstractLinearCode, K::CTFieldTypes, β::Vector{FqFieldElem})
     flag, λ = is_basis(C.F, K, β)
     flag || throw(ArgumentError("β is not a basis for the extension"))
 
-    # D = _expansiondict(C.F, K, λ)
+    # D = _expansion_dict(C.F, K, λ)
     # m = div(degree(C.F), degree(K))
 
     G = generator_matrix(C)
@@ -552,6 +552,7 @@ function expanded_code(C::AbstractLinearCode, K::CTFieldTypes, β::Vector{<:CTFi
     end
     H_exp = expand_matrix(H_new, K, λ)
     # H_exp = _expandmatrix(H_new, D, m)
+    return G_exp
 
     C_new = LinearCode(G_exp, H_exp)
     C_new.G = change_base_ring(K, C_new.G)
@@ -566,14 +567,14 @@ function expanded_code(C::AbstractLinearCode, K::CTFieldTypes, β::Vector{<:CTFi
 end
 
 # """
-#     subfield_subcode(C::AbstractLinearCode, K::FqNmodFiniteField)
+#     subfield_subcode(C::AbstractLinearCode, K::fqPolyRepField)
 #
 # Return the subfield subcode code of `C` over `K` using Delsarte's theorem.
 #
 # Use this method if you are unsure of the dual basis to the basis you which
 # to expand with.
 # """
-# function subfield_subcode(C::AbstractLinearCode, K::FqNmodFiniteField)
+# function subfield_subcode(C::AbstractLinearCode, K::fqPolyRepField)
 #     return dual(trace_code(dual(C), K))
 # end
 

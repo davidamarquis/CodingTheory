@@ -1,4 +1,4 @@
-# Copyright (c) 2021, 2022, 2023, 2024 Eric Sabo, Benjamin Ide
+# Copyright (c) 2021 - 2024 Eric Sabo, Benjamin Ide
 # All rights reserved.
 #
 # This source code is licensed under the BSD-style license found in the
@@ -7,10 +7,8 @@
 module CodingTheory
 
 using AutoHashEquals
-using CairoMakie, NetworkLayout, GraphMakie, GLMakie, WGLMakie, Graphs
+using Graphs
 import Graphs as Grphs
-using Plots
-# import Grphs: nv, incidence_matrix, vertices, inneighbors, add_edge!, add_vertex!
 using Oscar
 using Combinatorics
 using .Threads
@@ -19,22 +17,28 @@ using SparseArrays
 using Random
 using DataStructures
 using StatsBase
+using Distributions
 
 import LinearAlgebra: tr, Adjoint, transpose, kron, diagm
-import Oscar: dual, isprime, factor, transpose, order, polynomial, nrows, ncols, degree,
-    isisomorphic, lift, quo, VectorSpace, dimension, extend, support, complement,
+import Oscar: dual, factor, transpose, order, polynomial, nrows, ncols, degree,
+    lift, quo, VectorSpace, dimension, extend, support, complement,
     is_regular, iscyclic, genus, density, isdegenerate, index, generators, copy, issubfield, ⊗,
     girth, generator_matrix, polynomial_ring, is_primitive, normal_subgroups, vector_space,
-    tensor_product, gens, dim, is_isomorphic
+    tensor_product, gens, dim, is_isomorphic, field
 import Oscar.Nemo: exponent_vectors
 import Oscar.GAP: GapObj, Globals, Packages
 import Base: circshift, iseven, show, length, in, zeros, ⊆, /, *, ==, ∩, +, -, copy, isequal, ∘
-import CairoMakie: save
 import Combinatorics: powerset
 import DataStructures: capacity
 
-# TODO: don't want this here
-# GAP.Packages.load("LINS");
+# tilings.jl
+LINS_flag_install = Packages.install("LINS")
+if LINS_flag_install
+    LINS_flag = Packages.load("LINS")
+    LINS_flag || @warn "Unable to load the GAP packages LINS."
+else
+    @warn "Unable to install the GAP packages LINS."
+end
 
 #############################
          # types.jl
@@ -42,10 +46,10 @@ import DataStructures: capacity
 
 const CTFieldTypes = FinField
 const CTFieldElem = FinFieldElem
-const CTMatrixTypes = MatElem{<:CTFieldElem}
+const CTMatrixTypes = Union{fpMatrix, FqMatrix} # MatElem{<:CTFieldElem}
 const CTPolyRing = PolyRing{<:CTFieldElem}
 const CTPolyRingElem = PolyRingElem{<:CTFieldElem}
-const CTGroupAlgebra = AlgGrpElem{fpFieldElem, AlgGrp{fpFieldElem, GrpAbFinGen, GrpAbFinGenElem}}
+const CTGroupAlgebra = GroupAlgebraElem{fpFieldElem, GroupAlgebra{fpFieldElem, FinGenAbGroup, FinGenAbGroupElem}}
 const CTChainComplex = Union{ComplexOfMorphisms{AbstractAlgebra.FPModule{fpFieldElem}}} # residue and group algebras later
 
 include("Classical/types.jl")
@@ -66,7 +70,8 @@ export AbstractSubsystemCode, AbstractSubsystemCodeCSS, AbstractStabilizerCode, 
     AbstractGraphStateStabilizerCSS, AbstractHypergraphProductCode, AbstractEASubsystemCode,
     AbstractEASubsystemCodeCSS, AbstractEAStabilizerCode, AbstractEAStabilizerCodeCSS 
 # misc
-export LogicalTrait, GaugeTrait, HasLogicals, HasNoLogicals, HasGauges, HasNoGauges, copy, ChainComplex
+export LogicalTrait, GaugeTrait, CSSTrait, HasLogicals, HasNoLogicals, HasGauges, HasNoGauges,
+    IsCSS, IsNotCSS, copy, ChainComplex
 
 #############################
          # utils.jl
@@ -75,7 +80,7 @@ export LogicalTrait, GaugeTrait, HasLogicals, HasNoLogicals, HasGauges, HasNoGau
 include("utils.jl")
 export kronecker_product, Hamming_weight, weight, wt, Hamming_distance, distance,
     dist, tr, expand_matrix, symplectic_inner_product, are_symplectic_orthogonal,
-    Hermitian_inner_product, Hermitian_conjugate_matrix, FpmattoJulia, is_triorthogonal,
+    Hermitian_inner_product, Hermitian_conjugate_matrix, is_triorthogonal,
     print_string_array, print_char_array, print_symplectic_array, pseudoinverse,
     quadratic_to_symplectic, symplectic_to_quadratic, _remove_empty, quadratic_residues,
     digits_to_int, is_basis, primitive_basis, #polynomial_basis, monomial_basis,
@@ -85,7 +90,8 @@ export kronecker_product, Hamming_weight, weight, wt, Hamming_distance, distance
     is_regular, edge_vertex_incidence_matrix, edge_vertex_incidence_graph,
     is_valid_bipartition, extract_bipartition, is_Hermitian_self_orthogonal,
     row_supports, row_supports_symplectic, strongly_lower_triangular_reduction,
-    residue_polynomial_to_circulant_matrix, group_algebra_element_to_circulant_matrix
+    residue_polynomial_to_circulant_matrix, group_algebra_element_to_circulant_matrix,
+    load_alist
     # , _min_wt_row
     # , circ_shift
     # , lift
@@ -131,27 +137,63 @@ export code_complement, quo, quotient, /, direct_sum, ⊗, kron, tensor_product,
 #############################
 
 include("LDPC/codes.jl")
-export variable_degree_distribution, check_degree_distribution,
-    degree_distributions, column_bound, row_bound, bounds, density, is_regular,
-    LDPCCode, degree_distributions_plot, variable_degree_polynomial,
-    check_degree_polynomial, column_row_bounds, limited, regular_LDPC_code,
-    shortest_cycle_ACE, shortest_cycles, computation_graph, ACE_distribution,
-    ACE_spectrum, count_short_cycles, average_ACE_distribution,
-    median_ACE_distribution, mode_ACE_distribution, girth, count_elementary_cycles
+export LDPCCode, regular_LDPC_code, variable_degree_distribution, check_degree_distribution,
+    degree_distributions, column_bound, row_bound, column_row_bounds, limited, density,
+    is_regular, variable_degree_polynomial, check_degree_polynomial, degree_distributions_plot,
+    girth, computation_graph, enumerate_simple_cycles, simple_cycle_length_distribution,
+    simple_cycle_length_distribution_plot, average_simple_cycle_length, median_simple_cycle_length,
+    mode_simple_cycle_length, count_simple_cycles, simple_cycle_distribution_by_variable_node,
+    simple_cycle_distribution_by_variable_node, enumerate_short_cycles,
+    short_cycle_length_distribution, short_cycle_length_distribution_plot,
+    average_short_cycle_length, median_short_cycle_length, mode_short_cycle_length,
+    count_short_cycles, short_cycle_distribution_by_variable_node,
+    short_cycle_distribution_by_variable_node_plot
 
 #############################
-        # LDPCalgs.jl
+     # LDPC/cycles.jl
 #############################
 
-include("LDPC/algorithms.jl")
+include("LDPC/cycles.jl")
+export remove_cycles
+
+# #############################
+#     # LDPC/algorithms.jl
+# #############################
+
+# include("LDPC/algorithms.jl")
 
 #############################
-     # LDPC/decoders.jl
+    # LDPC/simulations.jl
 #############################
 
-include("LDPC/decoders.jl")
-export Gallager_A, Gallager_B, sum_product, sum_product_box_plus, min_sum,
-    find_MP_schedule, MPNoiseModel, decoder_simulation, LP_decoder_LDPC
+include("LDPC/simulations.jl")
+export MPNoiseModel
+
+#############################
+    # LDPC/MP_decoders.jl
+#############################
+
+include("LDPC/MP_decoders.jl")
+export Gallager_A, Gallager_B, sum_product, sum_product_box_plus, sum_product_syndrome,
+    min_sum, min_sum_syndrome, min_sum_with_correction, min_sum_with_correction_syndrome,
+    layered_schedule, balance_of_layered_schedule
+   
+#############################
+        # LDPC/GBP.jl
+#############################
+
+include("LDPC/GBP.jl")
+export Region, id, parents, ancestors, subregions, descendents, overcounting_number, 
+    counting_number, RegionGraph, regions, base_regions, outer_regions, basic_clusters, leaves,
+    canonical_region_graph, region_graph_from_base_nodes, region_graph_from_base_nodes,
+    is_valid_region_graph, remove_zero_overcounting_numbers, leaves
+
+#############################
+    # LDPC/LP_decoders.jl
+#############################
+
+include("LDPC/LP_decoders.jl")
+export LP_decoder_LDPC
 
 #############################
      # LDPC/channels.jl
@@ -169,8 +211,11 @@ export BinaryErasureChannel, BEC, BinarySymmetricChannel, BSC, BAWGNChannel,
 include("LDPC/analysis.jl")
 
 export LDPCEnsemble, erasure_probability, crossover_probability, standard_deviation, variance,
-    type, density_evolution, density_evolution!, plot_EXIT_chart, multiplicative_gap,
+    type, density_evolution, density_evolution!, EXIT_chart_plot, multiplicative_gap,
     multiplicative_gap_lower_bound, density_lower_bound, check_concentrated_degree_distribution
+
+export optimal_lambda, optimal_rho, optimal_lambda_and_rho, optimal_threshold, multiplicative_gap,
+    irregular_LDPC_code
 
 #############################
 # Classical/MatrixProductCode.jl
@@ -195,7 +240,7 @@ export defining_set, splitting_field, polynomial_ring, primitive_root, offset,
     design_distance, qcosets, qcosets_reps, generator_polynomial, parity_check_polynomial,
     idempotent, is_primitive, is_narrowsense, is_reversible, find_delta, dual_defining_set,
     CyclicCode, BCHCode, ReedSolomonCode, complement, ==, ∩, +, QuadraticResidueCode,
-    zeros, BCHbound, is_degenerate, nonzeros, is_cyclic, is_antiprimitive
+    zeros, BCH_bound, is_degenerate, nonzeros, is_cyclic, is_antiprimitive
 
 #############################
 # Classical/quasi-cyclic_code.jl
@@ -247,14 +292,25 @@ export SubsystemCode, field, length, num_qubits, dimension, cardinality,
     set_Z_stabilizers!, set_distance_lower_bound!, permute_code!, permute_code, set_stabilizers!,
     set_X_stabilizers!, standard_form_A, standard_form_A1, standard_form_A2, standard_form_B, standard_form_C1,
     standard_form_C2, standard_form_D, standard_form_E, logicals_standard_form, promote_gauges_to_logical!,
-    promote_gauges_to_logical, promote_logicals_to_gauge
+    promote_gauges_to_logical, promote_logicals_to_gauge, bare_minimum_distance_lower_bound,
+    bare_minimum_distance_upper_bound, dressed_minimum_distance_lower_bound,
+    dressed_minimum_distance_upper_bound, bare_X_minimum_distance_lower_bound,
+    bare_X_minimum_distance_upper_bound, dressed_X_minimum_distance_lower_bound,
+    bare_Z_minimum_distance_lower_bound, bare_Z_minimum_distance_upper_bound,
+    dressed_Z_minimum_distance_lower_bound, dressed_Z_minimum_distance_upper_bound,
+    X_minimum_distance, Z_minimum_distance, XZ_minimum_distance, set_bare_minimum_distance!,
+    set_bare_X_minimum_distance!, set_bare_Z_minimum_distance!, set_dressed_minimum_distance!,
+    set_dressed_X_minimum_distance!, set_dressed_Z_minimum_distance!
 
 #############################
  # Quantum/stabilizer_code.jl
 #############################
 
 include("Quantum/stabilizer_code.jl")
-export StabilizerCodeCSS, CSSCode, StabilizerCode, random_CSS_code, is_CSS_T_code
+export StabilizerCodeCSS, CSSCode, StabilizerCode, random_CSS_code, is_CSS_T_code,
+    minimum_distance_lower_bound, minimum_distance_upper_bound, X_minimum_distance_lower_bound,
+    X_minimum_distance_upper_bound, Z_minimum_distance_lower_bound, Z_minimum_distance_upper_bound,
+    set_X_minimum_distance!, set_Z_minimum_distance!
 
 #############################
    # Quantum/graphstate.jl
@@ -277,7 +333,7 @@ export FiveQubitCode, Q513, SteaneCode, Q713, _SteaneCodeTrellis, ShorCode, Q913
     Q412, Q422, Q511, Q823, Q15RM, Q1513, Q1573, TriangularSurfaceCode,
     RotatedSurfaceCode, XZZXSurfaceCode, TriangularColorCode488, TriangularColorCode666,
     ToricCode, PlanarSurfaceCode, XYSurfaceCode, XYZ2Code, HCode, QC6, QC4, ToricCode4D,
-    Q832, SmallestInterestingColorCode
+    Q832, SmallestInterestingColorCode, GrossCode #, PlanarSurfaceCode3D, ToricCode3D
 
 #############################
         # trellis.jl
@@ -305,10 +361,11 @@ export polynomial, type, CWE_to_HWE, weight_enumerator, MacWilliams_identity,
 include("Quantum/weight_dist.jl")
 # export weight_plot_CSS_X, weight_plot_CSS_Z, weight_plot_CSS, minimum_distance_X_Z,
 #     minimum_distance_X, minimum_distance_Z, is_pure, QDistRndCSS
-export QDistRndCSS
+export minimum_distance_upper_bound!, random_information_set_minimum_distance_bound!,
+    QDistRand
 
 #############################
-# Quantum/product_codes.jl
+#  Quantum/product_codes.jl
 #############################
 
 include("Quantum/product_codes.jl")
@@ -318,7 +375,14 @@ export HypergraphProductCode, GeneralizedShorCode, BaconCasaccinoConstruction,
     GeneralizedHypergraphProductCode, LiftedProductCode, bias_tailored_lifted_product_matrices,
     BiasTailoredLiftedProductCode, SPCDFoldProductCode, SingleParityCheckDFoldProductCode,
     Quintavalle_basis, asymmetric_product, symmetric_product, random_homological_product_code,
-    homological_product, ⊠
+    homological_product, ⊠, BivariateBicycleCode
+
+#############################
+#   Quantum/simulation.jl
+#############################
+
+include("Quantum/simulation.jl")
+export CSS_decoder_test, CSS_decoder_with_Bayes
 
 #############################
         # tilings.jl

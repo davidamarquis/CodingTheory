@@ -4,78 +4,29 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
+# TODO: make these functions accessible for LDPC code objects (in LDPC/codes.jl)
 """
-    Tanner_graph_plot(H::Union{fq_nmod_mat, Matrix{Int}})
+    Tanner_graph_plot(H::Union{CTMatrixTypes, Matrix{Int}})
 
-Return the Tanner graph of the matrix `H` as a `Figure` object.
+Return the Tanner graph of the matrix `H` as a Makie `Figure` object.
+
+# Note
+- Run `using Makie` to activate this extension.
 """
-function Tanner_graph_plot(H::Union{T, Matrix{Int}}) where T <: CTMatrixTypes
-    # convert H to A
-    M = FpmattoJulia(H)
-    nr, nc = size(M)
-    A = zeros(Int, nr + nc, nr + nc)
-    # bottom left corner
-    # need to threshold any nonzero to a 1
-    # A[nc + 1:end, 1:nc] = M
-    # no, put in top right corner in order to get parents, childs working
-    A[1:nc, nc + 1:end] = transpose(M)
-
-    f = Figure();
-    ax = Axis(f[1, 1], yreversed = true, xautolimitmargin = (0.15, 0.20),
-        yautolimitmargin = (0.15, 0.20))
-    hidespines!(ax)
-    hidedecorations!(ax)
-
-    left_x, left_y = zeros(nc), 1.:nc
-    right_x, right_y = ones(nr) * nr, range(1, nc, nr)
-    x = vcat(left_x, right_x)
-    y = vcat(left_y, right_y)
-    points = CairoMakie.Point.(zip(x, y))
-    cols = (:aqua, :red, :orange, :green, :blue, :purple)
-
-    # display(A)
-    G = SimpleDiGraph(A)
-    # display(G)
-    parents = [Grphs.inneighbors(G, i) for i in Grphs.vertices(G)]
-    childs = findall(x -> length(x) > 0, parents)
-    # println(parents)
-    # println(childs)
-
-    for (i, v) in enumerate(childs)
-        for node in parents[v]
-            lines!(CairoMakie.Point(x[[node, v]]...), CairoMakie.Point(y[[node, v]]...),
-                   color=cols[i % 6 + 1], linewidth=5)
-        end
-        text!(points[v], text=L"c_{%$i}", offset=(20, -15))
-    end
-
-    for (i, point) in enumerate(points[1:nc])
-        CairoMakie.scatter!(point, color=:black, marker=:circle, markersize=25)
-        text!(point, text=L"v_{%$i}", offset=(-30, -10))
-    end
-
-    for (i, point) in enumerate(points[nc + 1:end])
-        CairoMakie.scatter!(point, color=:black, marker=:rect, markersize=25)
-    end
-    display(f)
-    return f
-    # save("test.png", f)
-end
+function Tanner_graph_plot end
 
 """
-    Tanner_graph(H::Union{fq_nmod_mat, Matrix{Int}})
+    Tanner_graph(H::Union{CTMatrixTypes, Matrix{Int}})
 
 Return the `SimpleGraph` object repesenting the Tanner graph of the parity-check
 matrix `H` along with the indices of the left and right vertices representing
 the bits and parity checks, respectively.
 """
-function Tanner_graph(H::Union{fq_nmod_mat, Matrix{Int}})
-    typeof(H) <: fq_nmod_mat ? (I = FpmattoJulia(H);) : (I = H;)
-    I_tr = transpose(I)
-    # TODO: fix B - no zeros for this type
-    B = vcat(hcat(zeros(Int, size(I_tr)), I), hcat(I_tr, zeros(Int, size(I))))
+function Tanner_graph(H::Union{CTMatrixTypes, Matrix{Int}})
+    typeof(H) <: CTMatrixTypes ? (I = _Flint_matrix_to_Julia_int_matrix(H);) : (I = H;)
+    nr, nc = size(I)
+    B = vcat(hcat(zeros(Int, nc, nc), transpose(I)), hcat(I, zeros(Int, nr, nr)))
     G = SimpleGraph(B)
-    nr, nc = size(H)
     # lhs - bits
     # rhs - parity checks
     return G, collect(1:nr), collect(nr + 1:nr + nc)
@@ -90,12 +41,12 @@ respectively.
 """
 Tanner_graph(C::AbstractLinearCode) = Tanner_graph(parity_check_matrix(C))
 
-"""
-    Tanner_graph(C::AbstractLDPCCode)
+# """
+#     Tanner_graph(C::AbstractLDPCCode)
 
-Return the Tanner graph of `C` as a `Figure` object.
-"""
-Tanner_graph(C::AbstractLDPCCode) = ismissing(C.tangr) ? (return Tanner_graph(C.H);) : (return C.tangr;)
+# Return the Tanner graph of `C` as a `Figure` object.
+# """
+# Tanner_graph(C::AbstractLDPCCode) = Tanner_graph(C.H)
 
 # compressed sparse column (CSC) format used here so data is
 # colptr, nzvals, rowval
@@ -128,7 +79,7 @@ function Tanner_code(EVI::SparseMatrixCSC{Int, Int}, C::AbstractLinearCode)
     
     # pre-store all the information about H_loc
     # this could be a bit redundant if H_loc is sparse
-    # H_loc = FpmattoJulia(parity_check_matrix(C))
+    # H_loc = _Flint_matrix_to_Julia_int_matrix(parity_check_matrix(C))
     H_loc = parity_check_matrix(C)
     nr_H_loc, nc_H_loc = size(H_loc)
     H_loc_ind = Vector{Vector{Tuple{typeof(H_loc[1, 1]), Int}}}()

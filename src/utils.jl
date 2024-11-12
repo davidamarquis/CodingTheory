@@ -1,4 +1,4 @@
-# Copyright (c) 2021, 2023 Eric Sabo, Benjamin Ide
+# Copyright (c) 2021 - 2024 Eric Sabo, Benjamin Ide
 # All rights reserved.
 #
 # This source code is licensed under the BSD-style license found in the
@@ -127,6 +127,14 @@ end
 weight(v::T) where T <: Union{CTMatrixTypes, Vector{<:CTFieldElem}, Vector{S}, Adjoint{S, Vector{S}}, AbstractMatrix{S}} where S <: Integer = Hamming_weight(v)
 wt(v::T) where T <: Union{CTMatrixTypes, Vector{<:CTFieldElem}, Vector{S}, Adjoint{S, Vector{S}}, AbstractMatrix{S}} where S <: Integer = Hamming_weight(v)
 
+# TODO polish and export
+function row_wts_symplectic(A::CTMatrixTypes)
+    nc = size(A, 2)
+    iseven(nc) || throw(ArgumentError("Input does not have even length"))
+    n = div(nc, 2)
+    return [count(!iszero(A[i, j]) || !iszero(A[i, j + n]) for j in 1:n) for i in axes(A, 1)]
+end
+
 # Hamming_weight(v::Matrix{Int}) = return sum(v)
 
 # wt(v::Matrix{Int}) = count(x -> !iszero(x), v)
@@ -222,7 +230,7 @@ function Hermitian_inner_product(u::CTMatrixTypes, v::CTMatrixTypes)
     length(u) == length(v) || throw(ArgumentError("Vectors must be the same length in Hermitian inner product."))
     base_ring(u) == base_ring(v) || throw(ArgumentError("Vectors must be over the same field in Hermitian inner product."))
     q2 = order(base_ring(u))
-    issquare(q2) || throw(ArgumentError("The Hermitian inner product is only defined over quadratic field extensions."))
+    is_square(q2) || throw(ArgumentError("The Hermitian inner product is only defined over quadratic field extensions."))
     
     q = Int(sqrt(q2, check = false))
     return sum(u[i] * v[i]^q for i in 1:length(u))
@@ -236,10 +244,11 @@ Return the Hermitian conjugate of the matrix `A`.
 function Hermitian_conjugate_matrix(A::CTMatrixTypes)
     R = base_ring(A)
     q2 = order(R)
-    issquare(q2) || throw(ArgumentError("The Hermitian conjugate is only defined over quadratic field extensions."))
+    is_square(q2) || throw(ArgumentError("The Hermitian conjugate is only defined over quadratic field extensions."))
 
     q = Int(sqrt(q2, check = false))
-    return matrix(R, A .^ q)
+    # return matrix(R, A .^ q)
+    return A .^ q
 end
 
 # TODO: entropy function is incomplete
@@ -261,28 +270,40 @@ end
 
 # Return the `CTMatrixTypes` matrix `M` as a Julia Int matrix.
 # """
-# TODO: want to remove and cease use of FpmattoJulia
-function FpmattoJulia(M::CTMatrixTypes)
-    degree(base_ring(M)) == 1 || throw(ArgumentError("Cannot promote higher order elements to the Ints."))
+# function FpmattoJulia(M::CTMatrixTypes)
+#     degree(base_ring(M)) == 1 || throw(ArgumentError("Cannot promote higher order elements to the Ints."))
 
-    A = zeros(Int, size(M))
-    for c in 1:ncols(M)
-        for r in 1:nrows(M)
-            A[r, c] = coeff(M[r, c], 0)
-        end
-    end
-    return A
-end
-FpmattoJulia(M::fpMatrix) = data.(M)
+#     A = zeros(Int, size(M))
+#     for c in 1:ncols(M)
+#         for r in 1:nrows(M)
+#             A[r, c] = coeff(M[r, c], 0)
+#         end
+#     end
+#     return A
+# end
+# FpmattoJulia(M::fpMatrix) = data.(M)
 
 _Flint_matrix_element_to_Julia_int(x::fpMatrix, i::Int, j::Int) = ccall((:nmod_mat_get_entry,
     Oscar.Nemo.libflint), Int, (Ref{fpMatrix}, Int, Int), x, i - 1 , j - 1)
 
-_Flint_matrix_element_to_Julia_int(x::FqMatrix, i::Int, j::Int) = ccall((:nmod_mat_get_entry,
-    Oscar.Nemo.libflint), Int, (Ref{FqMatrix}, Int, Int), x, i - 1 , j - 1)
-
 _Flint_matrix_to_Julia_int_matrix(A) = [ _Flint_matrix_element_to_Julia_int(A, i, j) for i in
     1:nrows(A), j in 1:ncols(A)]
+
+_Flint_matrix_to_Julia_int_vector(A) = vec(_Flint_matrix_to_Julia_int_matrix(A))
+
+function _Flint_matrix_to_Julia_bit_matrix(A::CTMatrixTypes)
+    order(base_ring(A)) == 2 || throw(DomainError(A, "Only works for binary matrices"))
+    BitMatrix(_Flint_matrix_to_Julia_int_matrix(A))
+end
+
+function _Flint_matrix_to_Julia_bool_matrix(A::CTMatrixTypes)
+    order(base_ring(A)) == 2 || throw(DomainError(A, "Only works for binary matrices"))
+    Matrix{Bool}(_Flint_matrix_to_Julia_int_matrix(A))
+end
+
+function _Flint_matrix_to_Julia_T_matrix(A::CTMatrixTypes, ::Type{T}) where T <: Number
+    Matrix{T}(_Flint_matrix_to_Julia_int_matrix(A))
+end
 
 # function _Flint_matrix_to_Julia_int_vector(A)
 #     # (nr == 1 || nc == 1) || throw(ArgumentError("Cannot cast matrix to vector"))
@@ -370,7 +391,7 @@ end
 #     return maxlen
 # end
 
-function _remove_empty(A::CTMatrixTypes, type::Symbol)
+function _remove_empty(A::Union{CTMatrixTypes, Matrix{<:Number}, BitMatrix}, type::Symbol)
     type ∈ (:rows, :cols) || throw(ArgumentError("Unknown type in _remove_empty"))
     
     del = Vector{Int}()
@@ -385,7 +406,7 @@ function _remove_empty(A::CTMatrixTypes, type::Symbol)
             end
             flag && append!(del, r)
         end
-        return isempty(del) ? A : A[setdiff(1:nrows(A), del), :]
+        return isempty(del) ? A : A[setdiff(axes(A, 1), del), :]
     elseif type == :cols
         for c in axes(A, 2)
             flag = true
@@ -397,7 +418,7 @@ function _remove_empty(A::CTMatrixTypes, type::Symbol)
             end
             flag && append!(del, c)
         end
-        return isempty(del) ? A : A[:, setdiff(1:ncols(A), del)]
+        return isempty(del) ? A : A[:, setdiff(axes(A, 2), del)]
     end
 end
 
@@ -408,6 +429,14 @@ function _rref_no_col_swap(M::CTMatrixTypes, row_range::UnitRange{Int}, col_rang
 end
 _rref_no_col_swap(M::CTMatrixTypes, row_range::Base.OneTo{Int}, col_range::Base.OneTo{Int}) = _rref_no_col_swap(M, 1:row_range.stop, 1:col_range.stop)
 _rref_no_col_swap(M::CTMatrixTypes) = _rref_no_col_swap(M, axes(M, 1), axes(M, 2))
+
+function _rref_no_col_swap(A::Union{BitMatrix, Matrix{Bool}}, row_range::UnitRange{Int} = 1:size(A, 1),
+        col_range::UnitRange{Int} = 1:size(A, 2))
+
+    B = copy(A)
+    _rref_no_col_swap!(B, row_range, col_range)
+    B
+end
 
 function _rref_no_col_swap!(A::CTMatrixTypes, row_range::UnitRange{Int}, col_range::UnitRange{Int})
     # don't do anything to A if the range is empty
@@ -490,6 +519,49 @@ function _rref_no_col_swap!(A::CTMatrixTypes, row_range::UnitRange{Int}, col_ran
     return nothing
 end
 
+function _rref_no_col_swap!(A::Union{BitMatrix, Matrix{Bool}}, row_range::UnitRange{Int} = 1:size(A, 1),
+        col_range::UnitRange{Int} = 1:size(A, 2))
+
+    isempty(row_range) && return nothing
+    isempty(col_range) && return nothing
+    i = row_range.start
+    j = col_range.start
+    nr = row_range.stop
+    nc = col_range.stop
+    while i <= nr && j <= nc
+        # find first pivot
+        ind = 0
+        for k in i:nr
+            if A[k, j]
+                ind = k
+                break
+            end
+        end
+
+        if !iszero(ind)
+            # swap to put the pivot in the next row
+            if ind != i
+                A[i, :], A[ind, :] = A[ind, :], A[i, :]
+            end
+
+            # eliminate
+            for k in row_range
+                if k != i
+                    if A[k, j]
+                        # do a manual loop here to reduce allocations
+                        @simd for l in axes(A, 2)
+                            A[k, l] ⊻= A[i, l]
+                        end
+                    end
+                end
+            end
+            i += 1
+        end
+        j += 1
+    end
+    return nothing
+end
+
 function _rref_col_swap(M::CTMatrixTypes, row_range::UnitRange{Int}, col_range::UnitRange{Int})
     A = deepcopy(M)
     rnk, P = _rref_col_swap!(A, row_range, col_range)
@@ -544,7 +616,7 @@ function _rref_col_swap!(A::CTMatrixTypes, row_range::UnitRange{Int}, col_range:
             else
                 # normalize pivot
                 if !isone(A[ind, j])
-                    A[ind, :] *= inv(A[ind, j])
+                    A[ind:ind, :] *= inv(A[ind, j])
                 end
 
                 # swap to put the pivot in the next row
@@ -745,6 +817,8 @@ function _rref_symp_col_swap!(A::CTMatrixTypes, row_range::UnitRange{Int}, col_r
     end
     return rnk, P
 end
+_rref_symp_col_swap!(A::CTMatrixTypes) = _rref_symp_col_swap!(A, axes(A, 1), axes(A, 2))
+_rref_symp_col_swap(A::CTMatrixTypes) = (B = deepcopy(A); return _rref_symp_col_swap!(B);)
 
 function digits_to_int(x::Vector{Int}, base::Int=2)
     res = 0
@@ -935,7 +1009,7 @@ Returns a vector where the ith entry lists the indices of the nonzero
 entries of `M[i, :]`
 """
 function row_supports(M::Union{CTMatrixTypes,
-    MatElem{AbstractAlgebra.Generic.ResidueRingElem{fpPolyRingElem}}})
+    MatElem{EuclideanRingResidueRingElem{fpPolyRingElem}}})
 
     output = [Int[] for _ in axes(M, 1)]
     for j in axes(M, 2)
@@ -1018,6 +1092,63 @@ function strongly_lower_triangular_reduction(A::CTMatrixTypes)
     end
     return ker, im
 end
+
+"""
+    load_alist(file::String)
+
+Return a `Matrix{Int}` object from the matrix stored in the alist file format in `file`.
+"""
+function load_alist(file::String)
+    contents = split.(readlines(file))
+    length(contents[1]) == 2 || throw(ArgumentError("Not a valid alist file. First line wrong."))
+    length(contents[2]) == 2 || throw(ArgumentError("Not a valid alist file. Second line wrong."))
+    M = parse(Int, contents[1][1])
+    N = parse(Int, contents[1][2])
+    length(contents) == M + N + 4 || throw(ArgumentError("Not a valid alist file. Wrong number of lines."))
+    row_wts = parse.(Int, contents[3])
+    col_wts = parse.(Int, contents[4])
+    length(row_wts) == M || throw(ArgumentError("Not a valid alist file. Wrong number of row weights."))
+    length(col_wts) == N || throw(ArgumentError("Not a valid alist file. Wrong number of column weights."))
+    maximum(row_wts) == parse(Int, contents[2][1]) || throw(ArgumentError("Not a valid alist file. Row weight mismatch."))
+    maximum(col_wts) == parse(Int, contents[2][2]) || throw(ArgumentError("Not a valid alist file. Col weight mismatch."))
+    all(allunique, contents[5:end]) || throw(ArgumentError("Not a valid alist file. Indices are repeated."))
+    all(length(contents[j]) == row_wts[i] for (i, j) in enumerate(5:M + 4)) || throw(ArgumentError("Not a valid alist file. Row weights don't match."))
+    all(length(contents[j]) == col_wts[i] for (i, j) in enumerate(M + 5:M + N + 4)) || throw(ArgumentError("Not a valid alist file. Column weights don't match."))
+
+    mat = zeros(Int, M, N)
+    for (col, i) in enumerate(M + 5:M + N + 4)
+        rows = parse.(Int, contents[i])
+        for row in rows
+            mat[row, col] = 1
+        end
+    end
+
+    for (row, i) in enumerate(5:M + 4)
+        cols = parse.(Int, contents[i])
+        for col in 1:N
+            mat[row, col] == (col in cols) || throw(ArgumentError("Not a valid alist file. The two matrix representations don't match."))
+        end
+    end
+    return mat
+end
+
+# TODO polish this and add/export
+# function save_mtx(h, path, info)
+#     m, n = size(h)
+#     num_nonzero = sum(count(!=(0), h, dims=2))
+#     open(path, "w") do io
+#         write(io, "%%MatrixMarket matrix coordinate integer general\n")
+#         write(io, "%%$(info)")
+#         write(io, "\n$m $n $(num_nonzero)\n")
+#         for i in 1:m
+#             for j in 1:n
+#                 if h[i, j] == 1
+#                     write(io, "$i $j 1\n")
+#                 end
+#             end
+#         end
+#     end
+# end
 
 #############################
   # Quantum Helper Functions
@@ -1195,7 +1326,7 @@ end
 _Pauli_string_to_symplectic(A::Vector{T}) where T <: Union{String, Vector{Char}} = reduce(vcat, [_Pauli_string_to_symplectic(s) for s in A])
 # need symplectictoPaulistring
 
-# charvec::Union{Vector{nmod}, Missing}=missing)
+# charvec::Union{Vector{zzModRingElem}, Missing}=missing)
 function _process_strings(SPauli::Vector{T}) where T <: Union{String, Vector{Char}}
     # Paulisigns = Vector{Int}()
     S_tr_Pauli_stripped = Vector{String}()
@@ -1240,7 +1371,7 @@ end
 #############################
 
 """
-    tr(x::fq_nmod, K::FqNmodFiniteField, verify::Bool=false)
+    tr(x::fqPolyRepFieldElem, K::fqPolyRepField, verify::Bool=false)
 
 Return the relative trace of `x` from its base field to the field `K`.
 
@@ -1248,7 +1379,7 @@ Return the relative trace of `x` from its base field to the field `K`.
 * If the optional parameter `verify` is set to `true`, the two fields are checked
   for compatibility.
 """
-function tr(x::CTFieldElem, K::CTFieldTypes, verify::Bool=false)
+function tr(x::CTFieldElem, K::CTFieldTypes; verify::Bool = false)
     L = parent(x)
     q = order(K)
     if verify
@@ -1279,14 +1410,14 @@ end
 function _expansion_dict(L::CTFieldTypes, K::CTFieldTypes, λ::Vector{<:CTFieldElem})
     m = div(degree(L), degree(K))
     L_elms = collect(L)
-    D = Dict{fqPolyRepFieldElem, fqPolyRepMatrix}()
+    D = Dict{FqFieldElem, FqMatrix}()
     for x in L_elms
-        D[x] = matrix(L, 1, m, [tr(x * λi) for λi in λ])
+        D[x] = matrix(L, 1, m, [CodingTheory.tr(x * λi, K) for λi in λ])
     end
     return D
 end
 
-function _expand_matrix(M::CTMatrixTypes, D::Dict{fqPolyRepFieldElem, fqPolyRepMatrix}, m::Int)
+function _expand_matrix(M::CTMatrixTypes, D::Dict{FqFieldElem, FqMatrix}, m::Int)
     m > 0 || throw(DomainError("Expansion factor must be positive"))
 
     M_exp = zero_matrix(base_ring(M), nrows(M), ncols(M) * m)
@@ -1299,7 +1430,7 @@ function _expand_matrix(M::CTMatrixTypes, D::Dict{fqPolyRepFieldElem, fqPolyRepM
 end
 
 """
-    expand_matrix(M::CTMatrixTypes, K::FqNmodFiniteField, β::Vector{fq_nmod})
+    expand_matrix(M::CTMatrixTypes, K::fqPolyRepField, β::Vector{fqPolyRepFieldElem})
 
 Return the matrix constructed by expanding the elements of `M` to the subfield
 `K` using the basis `β` for the base ring of `M` over `K`.
@@ -1324,7 +1455,7 @@ end
 Return the sets of quadratic resides and quadratic non-residues of `q` and `n`.
 """
 function quadratic_residues(q::Int, n::Int)
-    isodd(n) && isprime(n) || throw(ArgumentError("n must be an odd prime in quadratic residues"))
+    isodd(n) && is_prime(n) || throw(ArgumentError("n must be an odd prime in quadratic residues"))
     q^div(n - 1, 2) % n == 1 || throw(ArgumentError("q^(n - 1)/2 ≅ 1 mod n in quadratic residues"))
 
     # F = GF(n, 1, :α)
@@ -1360,7 +1491,7 @@ function _is_basis(E::CTFieldTypes, basis::Vector{<:CTFieldElem}, q::Int)
 end
 
 """
-    is_extension(E::FqNmodFiniteField, F::FqNmodFiniteField)
+    is_extension(E::fqPolyRepField, F::fqPolyRepField)
 
 Return `true` if `E/F` is a valid field extension.
 """
@@ -1382,7 +1513,7 @@ end
 is_subfield(F::CTFieldTypes, E::CTFieldTypes) = is_extension(E, F)
 
 """
-    is_basis(E::FqNmodFiniteField, F::FqNmodFiniteField, basis::Vector{fq_nmod})
+    is_basis(E::fqPolyRepField, F::fqPolyRepField, basis::Vector{fqPolyRepFieldElem})
 
 Return `true` and the dual (complementary) basis if `basis` is a basis for `E/F`,
 otherwise return `false, missing`.
@@ -1399,7 +1530,7 @@ function is_basis(E::CTFieldTypes, F::CTFieldTypes, basis::Vector{<:CTFieldElem}
 end
 
 """
-    primitive_basis(E::FqNmodFiniteField, F::FqNmodFiniteField)
+    primitive_basis(E::fqPolyRepField, F::fqPolyRepField)
 
 Return a primitive basis for `E/F` and its dual (complementary) basis.
 """
@@ -1412,11 +1543,11 @@ function primitive_basis(E::CTFieldTypes, F::CTFieldTypes)
     return basis, λ
 end
 # these are slightly different
-# polynomialbasis(E::FqNmodFiniteField, F::FqNmodFiniteField) = primitive_basis(E, F)
-# monomialbasis(E::FqNmodFiniteField, F::FqNmodFiniteField) = primitive_basis(E, F)
+# polynomialbasis(E::fqPolyRepField, F::fqPolyRepField) = primitive_basis(E, F)
+# monomialbasis(E::fqPolyRepField, F::fqPolyRepField) = primitive_basis(E, F)
 
 """
-    normal_basis(E::FqNmodFiniteField, F::FqNmodFiniteField)
+    normal_basis(E::fqPolyRepField, F::fqPolyRepField)
 
 Return a normal basis for `E/F` and its dual (complementary) basis.
 """
@@ -1437,8 +1568,8 @@ function normal_basis(E::CTFieldTypes, F::CTFieldTypes)
 end
 
 """
-    dual_basis(E::FqNmodFiniteField, F::FqNmodFiniteField, basis::Vector{fq_nmod})
-    complementary_basis(E::FqNmodFiniteField, F::FqNmodFiniteField, basis::Vector{fq_nmod})
+    dual_basis(E::fqPolyRepField, F::fqPolyRepField, basis::Vector{fqPolyRepFieldElem})
+    complementary_basis(E::fqPolyRepField, F::fqPolyRepField, basis::Vector{fqPolyRepFieldElem})
 
 Return the dual (complentary) basis of `basis` for the extension `E/F`.
 """
@@ -1450,8 +1581,8 @@ end
 complementary_basis(E::CTFieldTypes, F::CTFieldTypes, basis::Vector{<:CTFieldElem}) = dual_basis(E, F, basis)
 
 """
-    verify_dual_basis(E::FqNmodFiniteField, F::FqNmodFiniteField, basis::Vector{fq_nmod}, dual_basis::Vector{fq_nmod})
-    verify_complementary_basis(E::FqNmodFiniteField, F::FqNmodFiniteField, basis::Vector{fq_nmod}, dual_basis::Vector{fq_nmod})
+    verify_dual_basis(E::fqPolyRepField, F::fqPolyRepField, basis::Vector{fqPolyRepFieldElem}, dual_basis::Vector{fqPolyRepFieldElem})
+    verify_complementary_basis(E::fqPolyRepField, F::fqPolyRepField, basis::Vector{fqPolyRepFieldElem}, dual_basis::Vector{fqPolyRepFieldElem})
 
 Return `true` if `basis` is the dual of `dual_basis` for `E/F`, otherwise return `false`.
 """
@@ -1485,7 +1616,7 @@ end
 verify_complementary_basis(E::CTFieldTypes, F::CTFieldTypes, basis::Vector{<:CTFieldElem}, dual_basis::Vector{<:CTFieldElem}) = verify_dual_basis(E, F, basis, dual_basis)
 
 """
-    are_equivalent_basis(basis::Vector{fq_nmod}, basis2::Vector{fq_nmod})
+    are_equivalent_basis(basis::Vector{fqPolyRepFieldElem}, basis2::Vector{fqPolyRepFieldElem})
 
 Return `true` if `basis` is a scalar multiple of `basis2`.
 """
@@ -1504,7 +1635,7 @@ function are_equivalent_basis(basis::Vector{<:CTFieldElem}, basis2::Vector{<:CTF
 end
 
 """
-    is_self_dual_basis(E::FqNmodFiniteField, F::FqNmodFiniteField, basis::Vector{fq_nmod})
+    is_self_dual_basis(E::fqPolyRepField, F::fqPolyRepField, basis::Vector{fqPolyRepFieldElem})
 
 Return `true` if `basis` is equal to its dual.
 """
@@ -1515,7 +1646,7 @@ function is_self_dual_basis(E::CTFieldTypes, F::CTFieldTypes, basis::Vector{<:CT
 end
 
 """
-    is_primitive_basis(E::FqNmodFiniteField, F::FqNmodFiniteField, basis::Vector{fq_nmod})
+    is_primitive_basis(E::fqPolyRepField, F::fqPolyRepField, basis::Vector{fqPolyRepFieldElem})
 
 Return `true` if `basis` is a primitive basis for `E/F`.
 """
@@ -1531,7 +1662,7 @@ function is_primitive_basis(E::CTFieldTypes, F::CTFieldTypes, basis::Vector{<:CT
 end
 
 """
-    is_normal_basis(E::FqNmodFiniteField, F::FqNmodFiniteField, basis::Vector{fq_nmod})
+    is_normal_basis(E::fqPolyRepField, F::fqPolyRepField, basis::Vector{fqPolyRepFieldElem})
 
 Return `true` if `basis` is a normal basis for `E/F`.
 """

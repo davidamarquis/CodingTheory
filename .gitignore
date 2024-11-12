@@ -24,3 +24,5 @@ typestest.jl
 *.mem
 
 # Manifest.toml
+/.vscode
+alg_geo_notes.jl

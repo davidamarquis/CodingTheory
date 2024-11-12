@@ -40,18 +40,35 @@ mutable struct SubsystemCodeCSS <: AbstractSubsystemCodeCSS
       n::Int
       k::Union{Int, Rational{BigInt}}
       r::Int
-      d::Union{Int, Missing}
+      d_bare::Union{Int, Missing}
+      d_dressed::Union{Int, Missing}
+      dx_bare::Union{Int, Missing}
+      dx_dressed::Union{Int, Missing}
+      dz_bare::Union{Int, Missing}
+      dz_dressed::Union{Int, Missing}
+      l_bound_bare::Int # lower bound on d_bare
+      u_bound_bare::Int # upper bound on d_bare
+      l_bound_dressed::Int # lower bound on d_dressed
+      u_bound_dressed::Int # upper bound on d_dressed
+      l_bound_dx_bare::Int # lower bound on dx_bare
+      u_bound_dx_bare::Int # upper bound on dx_bare
+      l_bound_dz_bare::Int # lower bound on dz_bare
+      u_bound_dz_bare::Int # upper bound on dz_bare
+      l_bound_dx_dressed::Int # lower bound on dz_dressed
+      u_bound_dx_dressed::Int # upper bound on dz_dressed
+      l_bound_dz_dressed::Int # lower bound on dz_dressed
+      u_bound_dz_dressed::Int # upper bound on dz_dressed
       stabs::CTMatrixTypes
       X_stabs::CTMatrixTypes
       Z_stabs::CTMatrixTypes
       X_orig_code::Union{S, Missing} where S <: AbstractLinearCode
       Z_orig_code::Union{S, Missing} where S <: AbstractLinearCode
-      signs::Vector{nmod}
-      X_signs::Vector{nmod}
-      Z_signs::Vector{nmod}
+      signs::Vector{zzModRingElem}
+      X_signs::Vector{zzModRingElem}
+      Z_signs::Vector{zzModRingElem}
       logicals::Vector{Tuple{T, T}} where T <: CTMatrixTypes
       logs_mat::CTMatrixTypes
-      char_vec::Vector{nmod}
+      char_vec::Vector{zzModRingElem}
       gauge_ops::Vector{Tuple{T, T}} where T <: CTMatrixTypes
       g_ops_mat::CTMatrixTypes
       overcomplete::Bool
@@ -68,12 +85,17 @@ mutable struct SubsystemCode <: AbstractSubsystemCode
       n::Int
       k::Union{Int, Rational{BigInt}}
       r::Int
-      d::Union{Int, Missing}
+      d_bare::Union{Int, Missing}
+      d_dressed::Union{Int, Missing}
+      l_bound_bare::Int # lower bound on d_bare
+      u_bound_bare::Int # upper bound on d_bare
+      l_bound_dressed::Int # lower bound on d_dressed
+      u_bound_dressed::Int # upper bound on d_dressed
       stabs::CTMatrixTypes
       logicals::Vector{Tuple{T, T}} where T <: CTMatrixTypes
       logs_mat::CTMatrixTypes
-      char_vec::Vector{nmod}
-      signs::Vector{nmod}
+      char_vec::Vector{zzModRingElem}
+      signs::Vector{zzModRingElem}
       gauge_ops::Vector{Tuple{T, T}} where T <: CTMatrixTypes
       g_ops_mat::CTMatrixTypes
       overcomplete::Bool
@@ -93,19 +115,25 @@ mutable struct StabilizerCodeCSS <: AbstractStabilizerCodeCSS
       n::Int
       k::Union{Int, Rational{BigInt}}
       d::Union{Int, Missing}
-      d_x::Union{Int, Missing}
-      d_z::Union{Int, Missing}
+      dx::Union{Int, Missing}
+      dz::Union{Int, Missing}
+      l_bound::Int # lower bound on d
+      u_bound::Int # upper bound on d
+      l_bound_dx::Int # lower bound on dx
+      u_bound_dx::Int # upper bound on dx
+      l_bound_dz::Int # lower bound on dz
+      u_bound_dz::Int # upper bound on dz
       stabs::CTMatrixTypes
       X_stabs::CTMatrixTypes
       Z_stabs::CTMatrixTypes
       X_orig_code::Union{S, Missing} where S <: AbstractLinearCode
       Z_orig_code::Union{S, Missing} where S <: AbstractLinearCode
-      signs::Vector{nmod}
-      X_signs::Vector{nmod}
-      Z_signs::Vector{nmod}
+      signs::Vector{zzModRingElem}
+      X_signs::Vector{zzModRingElem}
+      Z_signs::Vector{zzModRingElem}
       logicals::Vector{Tuple{T, T}} where T <: CTMatrixTypes
       logs_mat::CTMatrixTypes
-      char_vec::Vector{nmod}
+      char_vec::Vector{zzModRingElem}
       sgn_CWE_stabs::Union{WeightEnumerator, Missing} # signed complete weight enumerator
       sgn_CWE_dual::Union{WeightEnumerator, Missing} # S^⟂
       sgn_CWE_logs::Union{WeightEnumerator, Missing}
@@ -124,11 +152,13 @@ mutable struct StabilizerCode <: AbstractStabilizerCode
       n::Int
       k::Union{Int, Rational{BigInt}}
       d::Union{Int, Missing}
+      l_bound::Int # lower bound on d
+      u_bound::Int # upper bound on d
       stabs::CTMatrixTypes
       logicals::Vector{Tuple{T, T}} where T <: CTMatrixTypes
       logs_mat::CTMatrixTypes
-      char_vec::Vector{nmod}
-      signs::Vector{nmod}
+      char_vec::Vector{zzModRingElem}
+      signs::Vector{zzModRingElem}
       sgn_CWE_stabs::Union{WeightEnumerator, Missing} # signed complete weight enumerator
       sgn_CWE_dual::Union{WeightEnumerator, Missing} # S^⟂
       sgn_CWE_logs::Union{WeightEnumerator, Missing}
@@ -150,10 +180,15 @@ mutable struct GraphStateSubsystem <: AbstractGraphStateSubsystem
       n::Int
       k::Int
       r::Int
-      d::Union{Int, Missing}
+      d_bare::Union{Int, Missing}
+      d_dressed::Union{Int, Missing}
+      l_bound_bare::Int # lower bound on d_bare
+      u_bound_bare::Int # upper bound on d_bare
+      l_bound_dressed::Int # lower bound on d_dressed
+      u_bound_dressed::Int # upper bound on d_dressed
       stabs::CTMatrixTypes
-      char_vec::Vector{nmod}
-      signs::Vector{nmod}
+      char_vec::Vector{zzModRingElem}
+      signs::Vector{zzModRingElem}
       wtenum::Union{WeightEnumerator, Missing} # signed complete weight enumerator
       overcomplete::Bool
       gauge_ops::Vector{Tuple{T, T}} where T <: CTMatrixTypes
@@ -170,18 +205,33 @@ mutable struct GraphStateSubsystemCSS <: AbstractGraphStateSubsystemCSS
       n::Int
       k::Int
       r::Int
-      d::Union{Int, Missing}
-      d_x::Union{Int, Missing}
-      d_z::Union{Int, Missing}
+      d_bare::Union{Int, Missing}
+      d_dressed::Union{Int, Missing}
+      dx_bare::Union{Int, Missing}
+      dx_dressed::Union{Int, Missing}
+      dz_bare::Union{Int, Missing}
+      dz_dressed::Union{Int, Missing}
+      l_bound_bare::Int # lower bound on d_bare
+      u_bound_bare::Int # upper bound on d_bare
+      l_bound_dressed::Int # lower bound on d_dressed
+      u_bound_dressed::Int # upper bound on d_dressed
+      l_bound_dx_bare::Int # lower bound on dx_bare
+      u_bound_dx_bare::Int # upper bound on dx_bare
+      l_bound_dz_bare::Int # lower bound on dz_bare
+      u_bound_dz_bare::Int # upper bound on dz_bare
+      l_bound_dx_dressed::Int # lower bound on dz_dressed
+      u_bound_dx_dressed::Int # upper bound on dz_dressed
+      l_bound_dz_dressed::Int # lower bound on dz_dressed
+      u_bound_dz_dressed::Int # upper bound on dz_dressed
       stabs::CTMatrixTypes
       X_stabs::CTMatrixTypes
       Z_stabs::CTMatrixTypes
       X_orig_code::Union{S, Missing} where S <: AbstractLinearCode
       Z_orig_code::Union{S, Missing} where S <: AbstractLinearCode
-      signs::Vector{nmod}
-      X_signs::Vector{nmod}
-      Z_signs::Vector{nmod}
-      char_vec::Vector{nmod}
+      signs::Vector{zzModRingElem}
+      X_signs::Vector{zzModRingElem}
+      Z_signs::Vector{zzModRingElem}
+      char_vec::Vector{zzModRingElem}
       sgn_CWE_stabs::Union{WeightEnumerator, Missing} # signed complete weight enumerator
       overcomplete::Bool
       gauge_ops::Vector{Tuple{T, T}} where T <: CTMatrixTypes
@@ -199,9 +249,11 @@ mutable struct GraphStateStabilizer <: AbstractGraphStateStabilizer
       n::Int
       k::Int
       d::Union{Int, Missing}
+      l_bound::Int # lower bound on d
+      u_bound::Int # upper bound on d
       stabs::CTMatrixTypes
-      char_vec::Vector{nmod}
-      signs::Vector{nmod}
+      char_vec::Vector{zzModRingElem}
+      signs::Vector{zzModRingElem}
       sgn_CWE_stabs::Union{WeightEnumerator, Missing} # signed complete weight enumerator
       overcomplete::Bool
       stabs_stand::CTMatrixTypes
@@ -216,17 +268,23 @@ mutable struct GraphStateStabilizerCSS <: AbstractGraphStateStabilizerCSS
       n::Int
       k::Int
       d::Union{Int, Missing}
-      d_x::Union{Int, Missing}
-      d_z::Union{Int, Missing}
+      dx::Union{Int, Missing}
+      dz::Union{Int, Missing}
+      l_bound::Int # lower bound on d
+      u_bound::Int # upper bound on d
+      l_bound_dx::Int # lower bound on dx
+      u_bound_dx::Int # upper bound on dx
+      l_bound_dz::Int # lower bound on dz
+      u_bound_dz::Int # upper bound on dz
       stabs::CTMatrixTypes
       X_stabs::CTMatrixTypes
       Z_stabs::CTMatrixTypes
       X_orig_code::Union{S, Missing} where S <: AbstractLinearCode
       Z_orig_code::Union{S, Missing} where S <: AbstractLinearCode
-      signs::Vector{nmod}
-      X_signs::Vector{nmod}
-      Z_signs::Vector{nmod}
-      char_vec::Vector{nmod}
+      signs::Vector{zzModRingElem}
+      X_signs::Vector{zzModRingElem}
+      Z_signs::Vector{zzModRingElem}
+      char_vec::Vector{zzModRingElem}
       sgn_CWE_stabs::Union{WeightEnumerator,Missing} # signed complete weight enumerator
       overcomplete::Bool
       stabs_stand::CTMatrixTypes
@@ -248,19 +306,25 @@ mutable struct HypergraphProductCode <: AbstractHypergraphProductCode
       n::Integer
       k::Union{Integer, Rational{BigInt}}
       d::Union{Integer, Missing}
-      d_x::Union{Integer, Missing}
-      d_z::Union{Integer, Missing}
+      dx::Union{Integer, Missing}
+      dz::Union{Integer, Missing}
+      l_bound::Int # lower bound on d
+      u_bound::Int # upper bound on d
+      l_bound_dx::Int # lower bound on dx
+      u_bound_dx::Int # upper bound on dx
+      l_bound_dz::Int # lower bound on dz
+      u_bound_dz::Int # upper bound on dz
       stabs::CTMatrixTypes
       X_stabs::CTMatrixTypes
       Z_stabs::CTMatrixTypes
       C1::Union{S, Missing} where S <: AbstractLinearCode
       C2::Union{S, Missing} where S <: AbstractLinearCode
-      signs::Vector{nmod}
-      X_signs::Vector{nmod}
-      Z_signs::Vector{nmod}
+      signs::Vector{zzModRingElem}
+      X_signs::Vector{zzModRingElem}
+      Z_signs::Vector{zzModRingElem}
       logicals::Vector{Tuple{T, T}} where T <: CTMatrixTypes
       logs_mat::CTMatrixTypes
-      char_vec::Vector{nmod}
+      char_vec::Vector{zzModRingElem}
       overcomplete::Bool
       stabs_stand::CTMatrixTypes
       stand_r::Int

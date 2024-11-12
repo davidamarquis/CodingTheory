@@ -1,11 +1,11 @@
-@testset "Classical/tilings.jl & Classical/Tanner.jl" begin
+@testitem"Classical/tilings.jl & Classical/Tanner.jl" begin
     using Graphs
-    CodingTheory.Oscar.GAP.Packages.load("LINS");
+    using Oscar
+    using CodingTheory
 
     min_index = 250;
     max_index = 5000;
-    # F, _ = finite_field(2)
-    F = GF(2)
+    F = Oscar.Nemo.Native.GF(2)
 
     # first test case
     local_code = HammingCode(2, 3);
